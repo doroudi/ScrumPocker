@@ -1,0 +1,35 @@
+﻿@page "/"
+@rendermode InteractiveServer
+@inject DialogService DialogService
+
+<PageTitle>ScrumPoker</PageTitle>
+
+<div class="rz-display-flex rz-flex-column rz-align-items-center rz-justify-content-center rz-mx-auto rz-my-10">
+    <RadzenText TextStyle="TextStyle.DisplayH3">Online Scrum Poker</RadzenText>
+
+    <RadzenText TextStyle="TextStyle.Button">Create Scrum Poker session freely</RadzenText>
+    <div class="rz-mt-8">
+        <RadzenButton Variant="Variant.Flat" class="action-button rz-ripple rz-margin-right-2"
+            Text="Start a new session" Size="ButtonSize.Medium" ButtonStyle="ButtonStyle.Success" 
+            Click=@CreateNewSession />
+
+        <RadzenButton Variant="Variant.Text" icon="arrow_forward" 
+            Size="ButtonSize.Medium" Text="Join a session" 
+            ButtonStyle="ButtonStyle.Info" Click=@JoinSession />
+    </div>
+</div>
+
+
+@code {
+    async Task JoinSession()
+    {
+        await DialogService.OpenAsync<JoinSession>("Join a Session", options: new DialogOptions { Width = "400px" });
+    }
+
+    async Task CreateNewSession()
+    {
+        var result = await DialogService.OpenAsync<CreateSession>("Create a new session", options: new DialogOptions { Width = "470px" });
+        Console.WriteLine(result);
+    }
+}
+

@@ -1,2 +1,2 @@
-# ScrumPocker
-ScrumPocker in Blazor
+# ScrumPoker
+ScrumPoker in Blazor
