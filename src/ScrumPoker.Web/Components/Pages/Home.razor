@@ -4,32 +4,34 @@
 
 <PageTitle>ScrumPoker</PageTitle>
 
-<div class="rz-display-flex rz-flex-column rz-align-items-center rz-justify-content-center rz-mx-auto rz-my-10">
+<div class="hero-section">
     <RadzenText TextStyle="TextStyle.DisplayH3">Online Scrum Poker</RadzenText>
 
-    <RadzenText TextStyle="TextStyle.Button">Create Scrum Poker session freely</RadzenText>
+    <RadzenText TextStyle="TextStyle.DisplayH6">Create Scrum Poker session freely</RadzenText>
     <div class="rz-mt-8">
-        <RadzenButton Variant="Variant.Flat" class="action-button rz-ripple rz-margin-right-2"
-            Text="Start a new session" Size="ButtonSize.Medium" ButtonStyle="ButtonStyle.Success" 
-            Click=@CreateNewSession />
+        <RadzenButton Variant="Variant.Flat" class="action-button rz-ripple rz-margin-right-4"
+                      Text="Start a new session" Size="ButtonSize.Medium" ButtonStyle="ButtonStyle.Success"
+                      Click=@CreateNewSession />
 
-        <RadzenButton Variant="Variant.Text" icon="arrow_forward" 
-            Size="ButtonSize.Medium" Text="Join a session" 
-            ButtonStyle="ButtonStyle.Info" Click=@JoinSession />
+        <RadzenButton Variant="Variant.Text" icon="arrow_forward"
+                      class="action-button rz-ripple"
+                      Size="ButtonSize.Medium" Text="Join a session"
+                      ButtonStyle="ButtonStyle.Info" Click=@JoinSession />
     </div>
 </div>
-
-
-@code {
-    async Task JoinSession()
-    {
-        await DialogService.OpenAsync<JoinSession>("Join a Session", options: new DialogOptions { Width = "400px" });
+<style>
+    .hero-section {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        margin-inline: auto;
+        height: calc(100vh - 100px);
     }
-
-    async Task CreateNewSession()
-    {
-        var result = await DialogService.OpenAsync<CreateSession>("Create a new session", options: new DialogOptions { Width = "470px" });
-        Console.WriteLine(result);
+    .action-button {
+        border-radius: 8px;
+        padding: .8em 1.2em;
+        font-size: 1rem;
+        margin: 1.2rem .7rem;
     }
-}
-
+</style>

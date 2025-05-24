@@ -1,6 +1,11 @@
 @using Radzen
+
 @namespace ScrumPoker.Components
 @inject DialogService DialogService
+@inject ISessionService SessionService
+@inject NavigationManager NavigationManager
+@inject IHttpContextAccessor HttpContextAccessor
+@inject IJSRuntime jsRuntime
 
 <RadzenStack Gap="1.5rem">
     <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem" AlignItems="AlignItems.Stretch"
@@ -12,7 +17,7 @@
             <RadzenTextBox @bind-Value="SessionName" Style="width:100%" Placeholder="Session Name"  />
         </div>
         <RadzenStack Orientation="Orientation.Horizontal">
-            <RadzenButton Text="Create" Click="() => DialogService.Close(true)" ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" Style="width: 80px;" />
+            <RadzenButton Text="Create" Click=@CreateSessionAsync ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" Style="width: 80px;" />
             <RadzenButton Text="Cancel" Click="() => DialogService.Close(false)" ButtonStyle="ButtonStyle.Light" />
         </RadzenStack>
     </RadzenStack>
@@ -20,4 +25,11 @@
 
 @code {
     string SessionName { get; set; } = string.Empty;
+
+    async Task CreateSessionAsync()
+    {
+        var session = await SessionService.CreateSessionAsync(Guid.NewGuid().ToString(), SessionName);
+        await jsRuntime.InvokeVoidAsync("setCookie", "UserId", session.CreatorId);
+        NavigationManager.NavigateTo($"/session/{session.Id}", true);
+    }
 }

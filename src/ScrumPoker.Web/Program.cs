@@ -1,19 +1,25 @@
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Radzen;
+using ScrumPoker.Data.Database;
+using ScrumPoker.Data.Services;
 using ScrumPoker.Web.Components;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
+builder.Services.TryAddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 builder.Services.AddRadzenComponents();
+var connectionString = builder.Configuration.GetConnectionString("MongoDb") ?? throw new InvalidOperationException("Connection string 'MongoDb' not found.");
+builder.Services.AddDbContext<AppDbContext>(opt =>
+{
+    opt.EnableSensitiveDataLogging();
+    opt.UseMongoDB(connectionString, "ScrumPoker");
+});
 
-
-// builder.Services.AddScoped<NotificationService>();
-// builder.Services.AddScoped<ContextMenuService>();
-// builder.Services.AddScoped<TooltipService>();
+builder.Services.AddScoped<ISessionService, SessionService>();
 
 var app = builder.Build();
 
@@ -21,7 +27,6 @@ var app = builder.Build();
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error", createScopeForErrors: true);
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
 
@@ -33,7 +38,5 @@ app.UseAntiforgery();
 app.MapStaticAssets();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
-
-    
 
 app.Run();
