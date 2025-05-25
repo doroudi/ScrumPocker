@@ -1,18 +1,21 @@
 @using Radzen
 @namespace ScrumPoker.Components
 @inject DialogService DialogService
+@inject ISessionService SessionService
+@inject NavigationManager NavigationManager
+@inject IJSRuntime jsRuntime
 
 <RadzenStack Gap="1.5rem">
     <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem" AlignItems="AlignItems.Stretch"
         JustifyContent="JustifyContent.SpaceBetween">
         <RadzenText TextStyle="TextStyle.Body1">
-            Wanna Join a session? 👍
+            Wanna Join a session? 👆
         </RadzenText>
         <div class="rz-my-2">
-            <RadzenTextBox @bind-Value="SessionId" Style="width:100%" Placeholder="SessionId" />
+            <RadzenTextBox  @bind-Value="SessionId" Style="width:100%" Placeholder="SessionId" />
         </div>
         <RadzenStack Orientation="Orientation.Horizontal">
-            <RadzenButton Text="Join" Click="() => DialogService.Close(true)" ButtonType="ButtonType.Submit"
+            <RadzenButton Text="Join" Click=@HandleJoinSession ButtonType="ButtonType.Submit"
                 ButtonStyle="ButtonStyle.Primary" icon="arrow_forward" Style="width: 80px;" />
             <RadzenButton Text="Cancel" Click="() => DialogService.Close(false)" ButtonStyle="ButtonStyle.Light" />
         </RadzenStack>
@@ -21,5 +24,21 @@
 
 
 @code {
-    string SessionId { get; set; }
+    string? SessionId { get; set; }
+
+    async Task HandleJoinSession() {
+        if (string.IsNullOrEmpty(SessionId))
+            return;
+
+        if(!long.TryParse(SessionId, out var numericId))
+            throw new Exception("ID is not valid");
+
+        var result = await SessionService.JoinSessionAsync(numericId, default);
+        if (result.IsError)
+            return;
+
+        await jsRuntime.InvokeVoidAsync("setCookie", "UserId", result.Value);
+        DialogService.Close(true);
+        NavigationManager.NavigateTo($"/Session/{SessionId}", true);
+    }
 }

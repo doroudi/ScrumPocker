@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Radzen;
 using ScrumPoker.Data.Database;
+using ScrumPoker.Data.Models;
 using ScrumPoker.Data.Services;
 using ScrumPoker.Web.Components;
 
@@ -12,14 +13,15 @@ builder.Services.AddRazorComponents()
 
 builder.Services.TryAddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 builder.Services.AddRadzenComponents();
-var connectionString = builder.Configuration.GetConnectionString("MongoDb") ?? throw new InvalidOperationException("Connection string 'MongoDb' not found.");
-builder.Services.AddDbContext<AppDbContext>(opt =>
-{
-    opt.EnableSensitiveDataLogging();
-    opt.UseMongoDB(connectionString, "ScrumPoker");
-});
+//var connectionString = builder.Configuration.GetConnectionString("MongoDb") ?? throw new InvalidOperationException("Connection string 'MongoDb' not found.");
+//builder.Services.AddDbContext<AppDbContext>(opt =>
+//{
+//    opt.EnableSensitiveDataLogging();
+//    opt.UseMongoDB(connectionString, "ScrumPoker");
+//});
 
-builder.Services.AddScoped<ISessionService, SessionService>();
+builder.Services.Configure<ScrumPokerDatabaseSettings>(builder.Configuration.GetSection("ScrumPokerDatabase"));
+builder.Services.AddSingleton<ISessionService, SessionService>();
 
 var app = builder.Build();
 

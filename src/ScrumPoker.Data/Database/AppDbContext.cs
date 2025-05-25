@@ -8,7 +8,7 @@ namespace ScrumPoker.Data.Database;
 public class AppDbContext(DbContextOptions options) : DbContext(options)
 {
     #nullable disable
-    public DbSet<Session> Sessions { get; init; }
+    public DbSet<Session> Sessions { get; set; }
 
     public static AppDbContext Create(IMongoDatabase database)
         => new(new DbContextOptionsBuilder<AppDbContext>()

@@ -1,0 +1,18 @@
+﻿@namespace ScrumPoker.Components
+
+<RadzenStack Gap="1.5rem">
+    <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem" AlignItems="AlignItems.Stretch"
+                 JustifyContent="JustifyContent.SpaceBetween">
+        <RadzenText TextStyle="TextStyle.Body1">
+            Enter your name:
+        </RadzenText>
+        <div class="rz-my-2">
+            <RadzenTextBox @bind-Value="DisplayName" Style="width:100%" Placeholder="Your name" />
+        </div>
+        <RadzenStack Orientation="Orientation.Horizontal">
+            <RadzenButton Text="Enter" Click=@Enter ButtonType="ButtonType.Submit"
+                          ButtonStyle="ButtonStyle.Success" icon="arrow_forward" Style="width: 80px;" />
+            <RadzenButton Text="Cancel" Click=@Cancel ButtonStyle="ButtonStyle.Light" />
+        </RadzenStack>
+    </RadzenStack>
+</RadzenStack>

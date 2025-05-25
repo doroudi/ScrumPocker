@@ -30,6 +30,6 @@
     {
         var session = await SessionService.CreateSessionAsync(Guid.NewGuid().ToString(), SessionName);
         await jsRuntime.InvokeVoidAsync("setCookie", "UserId", session.CreatorId);
-        NavigationManager.NavigateTo($"/session/{session.Id}", true);
+        NavigationManager.NavigateTo($"/Session/{session.Id}", true);
     }
 }

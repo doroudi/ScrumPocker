@@ -3,7 +3,7 @@ using ScrumPoker.Components;
 
 namespace ScrumPoker.Web.Components.Pages
 {
-    public partial class Home
+    public partial class Home(DialogService DialogService)
     {
         async Task JoinSession()
         {
