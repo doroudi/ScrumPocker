@@ -5,8 +5,8 @@ namespace ScrumPoker.Data.Services;
 
 public interface ISessionService
 {
-    Task<Session> CreateSessionAsync(string creatorId, string sessionName);
-    Task<ErrorOr<string>> JoinSessionAsync(long sessionId, CancellationToken cancellationToken);
+    Task<ErrorOr<Session>> CreateSessionAsync(string creatorId, string sessionName);
     Task<ErrorOr<Session>> GetSessionByIdAsync(long id, CancellationToken cancellationToken);
-    ValueTask<ErrorOr<Success>> UpdateUserNameAsync(long sessionId, string userName);
+    Task<ErrorOr<Participant>> JoinSessionAsync(long sessionId, string displayName, CancellationToken cancellationToken);
+    Task<ErrorOr<Success>> RemoveParticipantFromSessionAsync(string sessionId, string participantId);
 }

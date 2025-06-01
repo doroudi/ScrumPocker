@@ -7,11 +7,11 @@ public class Estimate
 {
     [BsonRepresentation(BsonType.ObjectId)]
     [BsonElement("participantId")]
-    public string ParticipantId { get; set; }
+    public required string ParticipantId { get; init; }
 
     [BsonRepresentation(BsonType.ObjectId)]
     [BsonElement("backlogId")]
-    public string BacklogId { get; set; }
+    public required string BacklogId { get; init; }
 
     [BsonElement("votedAt")]
     public DateTime VotedAt { get; set; } = DateTime.UtcNow;

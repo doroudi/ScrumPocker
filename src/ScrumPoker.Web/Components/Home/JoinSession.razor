@@ -26,18 +26,13 @@
 @code {
     string? SessionId { get; set; }
 
-    async Task HandleJoinSession() {
+    void HandleJoinSession() {
         if (string.IsNullOrEmpty(SessionId))
             return;
 
         if(!long.TryParse(SessionId, out var numericId))
             throw new Exception("ID is not valid");
 
-        var result = await SessionService.JoinSessionAsync(numericId, default);
-        if (result.IsError)
-            return;
-
-        await jsRuntime.InvokeVoidAsync("setCookie", "UserId", result.Value);
         DialogService.Close(true);
         NavigationManager.NavigateTo($"/Session/{SessionId}", true);
     }

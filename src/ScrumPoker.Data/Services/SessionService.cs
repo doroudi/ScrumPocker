@@ -1,50 +1,75 @@
 using ErrorOr;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Options;
 using MongoDB.Bson;
 using MongoDB.Driver;
+using ScrumPoker.Data.Hubs;
 using ScrumPoker.Data.Models;
+using System.Threading;
 
 namespace ScrumPoker.Data.Services;
 
 public class SessionService : ISessionService
 {
-    private IMongoCollection<Session> _sessions;
+    private readonly IMongoCollection<Session> _sessions;
     private readonly IHttpContextAccessor _httpContextAccessor;
 
-    public SessionService(IOptions<ScrumPokerDatabaseSettings> dbSettings, IHttpContextAccessor httpContextAccessor)
+    public SessionService(
+        IOptions<ScrumPokerDatabaseSettings> dbSettings,
+        IHttpContextAccessor httpContextAccessor,
+        IHubContext<SessionHub> hubContext)
     {
         _httpContextAccessor = httpContextAccessor;
+
         var client = new MongoClient(dbSettings.Value.ConnectionString);
         var mongoDb = client.GetDatabase(dbSettings.Value.DatabaseName);
         _sessions = mongoDb.GetCollection<Session>(dbSettings.Value.SessionsCollectionName);
     }
 
-    public async Task<Session> CreateSessionAsync(string creatorId, string sessionName)
+    public async Task<ErrorOr<Session>> CreateSessionAsync(string creatorId, string sessionName)
     {
-        var newSession = new Session
+        var userId = GetOrCreateUserId();
+        var newSession = Session.Create(sessionName, userId);
+
+        try
         {
-            Id = GenerateRandomId(),
-            DisplayName = sessionName,
-            CreatedAt = DateTime.UtcNow,
-            IsActive = true,
-            Participants = [],
-            CreatorId = GetOrCreateUserId(),
-        };
-        await _sessions.InsertOneAsync(newSession);
-        return newSession;
+            await _sessions.InsertOneAsync(newSession);
+            return newSession;
+        }
+        catch (Exception)
+        {
+            return Errors.Session.CannotCreateSession;
+        }
     }
 
-    public async Task<ErrorOr<string>> JoinSessionAsync(long sessionId, CancellationToken cancellationToken)
+    public async Task<ErrorOr<Participant>> JoinSessionAsync(long sessionId, string displayName, CancellationToken cancellationToken)
     {
         var session = await GetSessionByIdAsync(sessionId, cancellationToken);
         if (session.IsError)
             return session.Errors.FirstOrDefault();
 
         var userId = GetOrCreateUserId();
-        session.Value.Participants.Add(new Participant { Id = userId });
-        await _sessions.ReplaceOneAsync(x => x.Id == sessionId, session.Value, cancellationToken: cancellationToken);
-        return userId;
+        var participant = new Participant
+        {
+            Id = userId,
+            DisplayName = displayName
+        };
+
+        try
+        {
+            var update = Builders<Session>.Update.AddToSet(x => x.Participants, participant);
+            var result = await _sessions.UpdateOneAsync(x => x.Id == sessionId, update, cancellationToken: cancellationToken);
+
+            if (result.MatchedCount == 0)
+                return Errors.Session.SessionNotFound;
+
+            return participant;
+        }
+        catch (Exception)
+        {
+            return Errors.Session.CannotJoinToSession;
+        }
     }
 
     public async Task<ErrorOr<Session>> GetSessionByIdAsync(long sessionId, CancellationToken cancellationToken)
@@ -59,28 +84,28 @@ public class SessionService : ISessionService
 
             return session;
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             return Errors.Session.SessionNotFound;
         }
     }
 
-    public async ValueTask<ErrorOr<Success>> UpdateUserNameAsync(long sessionId, string userName)
+
+    public async Task<ErrorOr<Success>> RemoveParticipantFromSessionAsync(string sessionId, string participantId)
     {
-        var userId = GetUserIdFromCookie();
-        if (userId == null)
-            return Errors.Session.UserNotCreated;
-
-        var sessionResult = await GetSessionByIdAsync(sessionId, default);
-        if (sessionResult.IsError)
+        var id = long.Parse(participantId);
+        var session = await _sessions.Find(x => x.Id == id).FirstOrDefaultAsync();
+        if (session is null)
             return Errors.Session.SessionNotFound;
-        
-        var session = sessionResult.Value;
-        var participant = session.Participants.First(x => x.Id == userId);
-        participant.DisplayName = userName;
 
-        await _sessions.ReplaceOneAsync(x => x.Id == sessionId, session);
-        return Result.Success;
+        var filter = Builders<Session>.Filter.Eq(x => x.Id, id);
+        var update = Builders<Session>.Update.PullFilter(x => x.Participants, p => p.Id == participantId);
+        var result = await _sessions.UpdateOneAsync(filter, update);
+        if (result.ModifiedCount > 0)
+            return Result.Success;
+
+        return Errors.Session.CannotRemoveParticipant;
+
     }
 
     #region PrivateMethods
@@ -103,14 +128,6 @@ public class SessionService : ISessionService
         return null;
     }
 
-    private int GenerateRandomId()
-    {
-        long timeSeed = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-        int randomPart = Random.Shared.Next(0, 100000);
-        int combined = (int)((timeSeed + randomPart) % 90000000) + 10000000;
-        return combined;
-    }
-
-   
+    
     #endregion
 }

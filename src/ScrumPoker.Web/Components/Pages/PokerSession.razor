@@ -1,41 +1,33 @@
 ﻿@page "/Session/{id}"
+@using ScrumPoker.Web.Components.PokerSession
+
 @rendermode InteractiveServer
 
 <PageTitle>Session</PageTitle>
 
-@if(ActiveSession is null)
+@if (ActiveSession != null)
 {
-    <p>Loading...</p>
-    return;
-}
-
-@if(ActiveSession != null)
-{   
     <div>
         <RadzenButton Variant="Variant.Flat" class="action-button rz-ripple rz-margin-right-4"
-                    ButtonType="ButtonType.Button" Icon="share"
-                      Text="Share" Size="ButtonSize.Medium" ButtonStyle="ButtonStyle.Info"
+                      ButtonType="ButtonType.Button" Icon="share" Text="Share" Size="ButtonSize.Medium" ButtonStyle="ButtonStyle.Info"
                       Click=@Share />
     </div>
     <h3>Session @ActiveSession?.DisplayName</h3>
     <div>
         Session @ActiveSession?.Id
     </div>
-}
 
-
-@code {
-    public async Task Share()
-    {
-        var url = navigation.Uri.ToString();
-        await jsRuntime.InvokeVoidAsync("eval",
-        @"
-            const textArea = document.createElement('textarea');
-            textArea.value = '" + url + @"';
-            document.body.appendChild(textArea);
-            textArea.select();
-            document.execCommand('copy');
-            document.body.removeChild(textArea);
-        ");
-    }
+    <ul>
+        @foreach (var user in ActiveSession?.Participants ?? [])
+        {
+            <li>@user.DisplayName </li>
+        }
+    </ul>
+    <div class="estimates">
+        @foreach (var item in ActiveSession?.Participants)
+        {
+            <Estimate Username="@item.DisplayName"
+                      Value="0" Revealed=@ActiveBacklog.IsRevealed />
+        }
+    </div>
 }

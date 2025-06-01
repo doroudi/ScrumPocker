@@ -29,7 +29,10 @@
     async Task CreateSessionAsync()
     {
         var session = await SessionService.CreateSessionAsync(Guid.NewGuid().ToString(), SessionName);
-        await jsRuntime.InvokeVoidAsync("setCookie", "UserId", session.CreatorId);
-        NavigationManager.NavigateTo($"/Session/{session.Id}", true);
+        if (session.IsError)
+            return;
+
+        await jsRuntime.InvokeVoidAsync("setCookie", "UserId", session.Value.CreatorId);
+        NavigationManager.NavigateTo($"/Session/{session.Value.Id}", true);
     }
 }

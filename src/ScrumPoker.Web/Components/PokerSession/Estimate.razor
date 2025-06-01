@@ -1,0 +1,44 @@
+﻿
+<div class="item">
+    <div>@Username</div>
+    <div class="value">
+        @if(Revealed) {
+            <span class="value revealed">@Value</span>
+        }
+        else {
+            if(Value.HasValue) {
+                <span class="value selected">?</span>
+            }
+            else {
+                <span class="value not-selected"></span>
+            }
+        }
+    </div>
+</div>
+
+@code {
+
+    [Parameter]
+    public required string Username { get; set; }
+    
+    [Parameter]
+    public int? Value { get; set; }
+
+    [Parameter]
+    public bool Revealed {get;set;} = false;
+}
+
+
+<style>
+    .item {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.5rem;
+        box-shadow: 0 0 2px 3px rgba(0, 0, 0, 0.1);
+        border-radius: .4rem;
+        background-color: #fff;
+        margin: 0.5rem;
+    }
+</style>
