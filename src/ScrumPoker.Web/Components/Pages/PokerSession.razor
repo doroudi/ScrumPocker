@@ -1,4 +1,5 @@
 ﻿@page "/Session/{id}"
+@using Microsoft.AspNetCore.Components.Sections
 @using ScrumPoker.Web.Components.PokerSession
 
 @rendermode InteractiveServer
@@ -7,27 +8,41 @@
 
 @if (ActiveSession != null)
 {
+    <SectionContent SectionName="header">
+        <div class="header-content">
+            <div style="font-weight:bold;margin-right:1rem;font-size:1rem">
+                Session: <a href="@navigation.Uri">@ActiveSession?.Id</a>
+            </div>
+            <RadzenButton Variant="Variant.Flat" class="action-button rz-ripple rz-margin-right-4"
+                          ButtonType="ButtonType.Button" Icon="share" Text="Share" Size="ButtonSize.Medium" ButtonStyle="ButtonStyle.Info"
+                          Click=@Share />
+        </div>
+    </SectionContent>
+}
+
+@if (ActiveSession != null)
+{
     <div>
-        <RadzenButton Variant="Variant.Flat" class="action-button rz-ripple rz-margin-right-4"
-                      ButtonType="ButtonType.Button" Icon="share" Text="Share" Size="ButtonSize.Medium" ButtonStyle="ButtonStyle.Info"
-                      Click=@Share />
     </div>
     <h3>Session @ActiveSession?.DisplayName</h3>
-    <div>
-        Session @ActiveSession?.Id
-    </div>
 
-    <ul>
-        @foreach (var user in ActiveSession?.Participants ?? [])
-        {
-            <li>@user.DisplayName </li>
-        }
-    </ul>
     <div class="estimates">
-        @foreach (var item in ActiveSession?.Participants)
+        @foreach (var item in ActiveSession?.Participants ?? [])
         {
+            var value = @ActiveSession.Backlogs.FirstOrDefault(x => x.Id == ActiveSession.ActiveTaskId)?.Estimates.FirstOrDefault(x => x.ParticipantId == item.Id)?.Value ?? null;
+            value = 2;
             <Estimate Username="@item.DisplayName"
-                      Value="0" Revealed=@ActiveBacklog.IsRevealed />
+                      Revealed=@ActiveBacklog.IsRevealed Value="@value" />
         }
     </div>
 }
+
+    <style>
+        .header-content {
+            display: flex;
+            flex: 1;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+        }
+    </style>

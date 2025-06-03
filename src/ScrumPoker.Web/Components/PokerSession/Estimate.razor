@@ -3,14 +3,14 @@
     <div>@Username</div>
     <div class="value">
         @if(Revealed) {
-            <span class="value revealed">@Value</span>
+            <span class="revealed">@Value</span>
         }
         else {
             if(Value.HasValue) {
-                <span class="value selected">?</span>
+                <span class="selected">?</span>
             }
             else {
-                <span class="value not-selected"></span>
+                <span class="not-selected"></span>
             }
         }
     </div>
@@ -32,13 +32,26 @@
 <style>
     .item {
         display: flex;
-        flex-direction: column;
+        flex-direction: row;
         justify-content: space-between;
         align-items: center;
-        padding: 0.5rem;
-        box-shadow: 0 0 2px 3px rgba(0, 0, 0, 0.1);
+        padding: .4rem .7rem;
+        box-shadow: 0 0 3px 2px rgba(0, 0, 0, 0.018);
         border-radius: .4rem;
         background-color: #fff;
         margin: 0.5rem;
+        font-size: 1rem;
+    }
+
+    .value {
+        padding:0 .9rem;
+        box-shadow: 0 0 2px 1px rgba(0, 0, 0, 0.1);
+        height: 40px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 1.3rem;
+        font-weight:bold;
+        border-radius: .4rem;
     }
 </style>

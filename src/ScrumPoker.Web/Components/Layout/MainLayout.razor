@@ -1,27 +1,29 @@
-﻿@inherits LayoutComponentBase
+﻿@using Microsoft.AspNetCore.Components.Sections
+@inherits LayoutComponentBase
 
 <RadzenComponents @rendermode="InteractiveServer" />
 
 <RadzenLayout>
-    
     <RadzenHeader>
-        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0">
-            <RadzenSidebarToggle Click="@(() => sidebar1Expanded = !sidebar1Expanded)" />
-            <RadzenLabel Text="Header" />
-        </RadzenStack>
+        <div class="rz-display-flex rz-justify-content-center rz-row rz-mx-auto rz-py-2 rz-px-4">
+            <div class="rz-col-5">
+                <SectionOutlet SectionName="header" />
+            </div>
+        </div>
     </RadzenHeader>
-   
+
     <RadzenBody>
         <div class="rz-display-flex rz-row rz-align-items-normal rz-justify-content-center rz-mx-auto">
-            <div class="rz-col-12 rz-col-md-10">
-
+            <div class="rz-col-5">
                 @Body
-            </div>            
+            </div>
         </div>
     </RadzenBody>
-   
+
 </RadzenLayout>
 
-@code {
-    bool sidebar1Expanded = true;
-}
+<style>
+    .header {
+        
+    }
+</style>
