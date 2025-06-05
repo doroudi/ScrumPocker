@@ -17,10 +17,7 @@ builder.Services.AddRadzenComponents();
 builder.Services.Configure<ScrumPokerDatabaseSettings>(builder.Configuration.GetSection("ScrumPokerDatabase"));
 builder.Services.AddSingleton<ISessionService, SessionService>();
 builder.Services.AddSingleton<SessionHub>();
-builder.Services.AddSignalR(opt =>
-{
-    opt.EnableDetailedErrors = true;
-});
+builder.Services.AddSignalR();
 builder.Services.AddResponseCompression(opt =>
 {
     opt.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat(["application/octet-stream"]);

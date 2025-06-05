@@ -6,7 +6,6 @@ using MongoDB.Bson;
 using MongoDB.Driver;
 using ScrumPoker.Data.Hubs;
 using ScrumPoker.Data.Models;
-using System.Threading;
 
 namespace ScrumPoker.Data.Services;
 
@@ -17,8 +16,7 @@ public class SessionService : ISessionService
 
     public SessionService(
         IOptions<ScrumPokerDatabaseSettings> dbSettings,
-        IHttpContextAccessor httpContextAccessor,
-        IHubContext<SessionHub> hubContext)
+        IHttpContextAccessor httpContextAccessor)
     {
         _httpContextAccessor = httpContextAccessor;
 
@@ -105,18 +103,12 @@ public class SessionService : ISessionService
             return Result.Success;
 
         return Errors.Session.CannotRemoveParticipant;
-
     }
 
     #region PrivateMethods
-    private string GetOrCreateUserId()
-    {
-        var userId = GetUserIdFromCookie();
-        if (userId != null)
-            return userId;
+    private string GetOrCreateUserId() 
+        => GetUserIdFromCookie() ?? ObjectId.GenerateNewId().ToString();
 
-        return ObjectId.GenerateNewId().ToString();
-    }
 
     private string? GetUserIdFromCookie()
     {

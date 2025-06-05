@@ -5,7 +5,6 @@ using Radzen;
 using ScrumPoker.Components;
 using ScrumPoker.Data.Models;
 using ScrumPoker.Data.Services;
-using System.Diagnostics;
 
 namespace ScrumPoker.Web.Components.Pages;
 
@@ -14,7 +13,8 @@ public partial class PokerSession(
     DialogService dialogService,
     IHttpContextAccessor httpContextAccessor,
     IJSRuntime jsRuntime,
-    NavigationManager navigation) : IAsyncDisposable
+    NavigationManager navigation,
+    NotificationService notificationService) : IAsyncDisposable
 {
 
     #region  Fields
@@ -22,6 +22,11 @@ public partial class PokerSession(
     private Backlog ActiveBacklog = new();
     private HubConnection? _hubConnection;
     private List<Estimate> Estimates = [];
+    private readonly List<string> EstimateOptions = ["☕", "1", "2", "3", "5", "8", "13"];
+    private bool userIsJoined;
+    private bool IsAdmin => UserId == ActiveSession?.CreatorId;
+
+    private string? SelectedValue { get; set; } = null;
     #endregion
 
     #region Parameters
@@ -29,28 +34,49 @@ public partial class PokerSession(
     public required string Id { get; set; }
     #endregion
 
+    private void UpdatedSelected(string value)
+    {
+        if (SelectedValue != value)
+        {
+            InvokeAsync(() =>
+            {
+                SelectedValue = value;
+                StateHasChanged();
+            });
+        }
+    }
     #region Hooks
     protected override async Task OnInitializedAsync()
     {
         await InitializeWebSocket();
-        await LoadSession(default);
+        ActiveSession = await LoadSession(default);
         await base.OnInitializedAsync();
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        await base.OnAfterRenderAsync(firstRender);
-        if (firstRender)
+        if (!firstRender)
+            return;
+
+        if (UserId is null)
         {
-            var userId = httpContextAccessor.HttpContext?.Request.Cookies.FirstOrDefault(c => c.Key == "UserId").Value;
-            if (userId == null)
-                await JoinUserToSession(default);
+            await JoinUserToSession(default);
+            return;
         }
+        ActiveSession = await LoadSession(default);
+        if (UserId == ActiveSession.CreatorId && _hubConnection != null)
+        {
+            await _hubConnection.InvokeAsync("CreateSession", ActiveSession.Id.ToString(), UserId);
+        }
+        await base.OnAfterRenderAsync(firstRender);
     }
     #endregion
 
-    public async Task LoadSession(CancellationToken cancellationToken)
+    public async Task<Session> LoadSession(CancellationToken cancellationToken)
     {
+        if (ActiveSession != null)
+            return ActiveSession;
+
         if (!long.TryParse(Id, out var numericId))
             throw new Exception("Id is not valid");
 
@@ -58,8 +84,7 @@ public partial class PokerSession(
         if (sessionResult.IsError)
             throw new Exception("");
 
-        ActiveSession = sessionResult.Value;
-        
+        return sessionResult.Value;
     }
 
     public async Task JoinUserToSession(CancellationToken cancellationToken)
@@ -81,12 +106,15 @@ public partial class PokerSession(
         var participant = result.Value as Participant;
         //TODO: switch to session storage instead of cookie
         await jsRuntime.InvokeVoidAsync("setCookie", "UserId", participant.Id);
-        if (_hubConnection != null && _hubConnection.State == HubConnectionState.Connected)
-            await _hubConnection.InvokeAsync("JoinSession", ActiveSession?.Id.ToString(), participant , cancellationToken: cancellationToken);
-
-        //await _hubConnection.SendAsync("UserJoined", ActiveSession?.Id, cancellationToken: cancellationToken);
+        await JoinToSessionSocket(participant, cancellationToken);
+        userIsJoined = true;
     }
 
+    private async Task JoinToSessionSocket(Participant participant, CancellationToken cancellationToken)
+    {
+        if (_hubConnection != null && _hubConnection.State == HubConnectionState.Connected)
+            await _hubConnection.InvokeAsync("JoinSession", ActiveSession?.Id.ToString(), participant, cancellationToken: cancellationToken);
+    }
 
     private async Task InitializeWebSocket()
     {
@@ -98,10 +126,6 @@ public partial class PokerSession(
                 TimeSpan.FromSeconds(5),
                 TimeSpan.FromSeconds(10)
             ])
-            .ConfigureLogging(logging => {
-                logging.AddConsole();
-                logging.SetMinimumLevel(LogLevel.Debug);
-            })
             .Build();
 
 
@@ -113,7 +137,23 @@ public partial class PokerSession(
                 {
                     ActiveSession.Participants.Add(participant);
                     StateHasChanged();
+                    notificationService.Notify(new NotificationMessage
+                    {
+                        Severity = NotificationSeverity.Success,
+                        Summary = "User Joined",
+                        Detail = $"{participant.DisplayName} has joined the session.",
+                        Duration = 3000
+                    });
                 }
+            });
+        });
+
+        _hubConnection.On("SessionCreated", () =>
+        {
+            InvokeAsync(() =>
+            {
+                userIsJoined = true;
+                StateHasChanged();
             });
         });
 
@@ -140,6 +180,13 @@ public partial class PokerSession(
 
     public async Task Share()
     {
+        notificationService.Notify(new NotificationMessage
+        {
+            Severity = NotificationSeverity.Info,
+            Summary = "Link Copied",
+            Detail = "Session link has been copied to clipboard.",
+            Duration = 3000
+        });
         var url = navigation.Uri.ToString();
         await jsRuntime.InvokeVoidAsync("eval",
         @"
@@ -158,4 +205,6 @@ public partial class PokerSession(
         if (_hubConnection != null)
             await _hubConnection.DisposeAsync();
     }
+
+    private string? UserId => httpContextAccessor.HttpContext?.Request.Cookies.FirstOrDefault(c => c.Key == "UserId").Value;
 }

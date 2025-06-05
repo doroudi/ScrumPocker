@@ -1,0 +1,110 @@
+﻿@code {
+    [Parameter]
+    public required string Value { get; set; }
+
+    [Parameter]
+    public bool IsSelected { get; set; } = false;
+
+    [Parameter]
+    public EventCallback<string> OnSelected { get; set; }
+
+    void OnClick()
+    {
+        IsSelected = !IsSelected;
+        if (IsSelected)
+        {
+            OnSelected.InvokeAsync(Value);
+        }
+    }
+}
+
+<button class="estimate-card @(IsSelected ? "selected" : "")" @onclick="OnClick">
+    <span class="inner">
+        <em class="before">@Value</em>
+        <span class="card-value">@Value</span>
+        <em class="after">@Value</em>
+    </span>
+</button>
+
+<style>
+    :root{
+        --estimated-card-bg-color: #FFF;
+        --estimated-card-border-color: #DCDCDC;
+        --estimated-card-selected-bg-color: #4889BC;
+        --estimated-card-selected-text-color: #f4f4ff;
+        --estimated-card-selected-inner-bg-color: #60c257;
+        --estimated-card-hover-inner-bg-color: #e2eef7;
+        --estimated-card-inner-bg-color: #F7F7F7;
+        --estimated-card-border-radius: 7px;
+    }
+    .estimate-card {
+        display: inline-flex;
+        padding: 8px;
+        margin: 10px;
+        border: 2px solid var(--estimated-card-border-color);
+        border-radius: var(--estimated-card-border-radius);
+        cursor: pointer;
+        text-align: center;
+        font-size: 2.2em;
+        width:75px;
+        height:100px;
+        justify-content: stretch;
+        align-items: stretch;
+        background: #FFF;
+        font-weight: bold;;
+    }
+
+    .estimate-card:hover {
+        border-color: var(--estimated-card-selected-bg-color);
+    }
+
+    .estimate-card .inner {
+        background: var(--estimated-card-inner-bg-color);
+        position: relative;
+        border-radius: var(--estimated-card-border-radius);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex:1;
+    }
+    .estimate-card:hover .inner {
+        background: var(--estimated-card-hover-inner-bg-color);
+        color: var(--estimated-card-selected-bg-color);
+    }
+
+    .estimate-card.selected {
+        border-color: var(--estimated-card-selected-inner-bg-color);
+    }
+    .estimate-card.selected .inner {
+        background: var(--estimated-card-selected-inner-bg-color);
+        color: var(--estimated-card-selected-text-color);
+        
+    }
+
+
+    .estimate-card .before,.estimate-card .after {
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background: var(--estimated-card-bg-color);
+        position: absolute;
+        font-size: 0.6rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-style: normal;
+        color: #999;
+        font-weight: normal;
+    }
+    .estimate-card .before {
+        left: -6px;
+        top: -6px;
+        @* transform: translateY(-50%); *@
+    }
+
+    .estimate-card .after {
+        right: -6px;
+        bottom: -6px;
+        @* transform: translateY(-50%); *@
+    }
+</style>

@@ -6,43 +6,45 @@
 
 <PageTitle>Session</PageTitle>
 
-@if (ActiveSession != null)
-{
-    <SectionContent SectionName="header">
-        <div class="header-content">
+
+<SectionContent SectionName="header">
+    <div class="header-content">
             <div style="font-weight:bold;margin-right:1rem;font-size:1rem">
-                Session: <a href="@navigation.Uri">@ActiveSession?.Id</a>
+                <span>Session: <a href="@navigation.Uri">@ActiveSession?.Id</a></span>
             </div>
             <RadzenButton Variant="Variant.Flat" class="action-button rz-ripple rz-margin-right-4"
                           ButtonType="ButtonType.Button" Icon="share" Text="Share" Size="ButtonSize.Medium" ButtonStyle="ButtonStyle.Info"
                           Click=@Share />
-        </div>
-    </SectionContent>
-}
-
-@if (ActiveSession != null)
-{
-    <div>
     </div>
-    <h3>Session @ActiveSession?.DisplayName</h3>
+</SectionContent>
 
+@if (ActiveSession != null && userIsJoined)
+{
+    @if(!IsAdmin){
+         <div class="estimate">
+             @foreach (var item in EstimateOptions)
+             {
+                 <EstimateCard Value="@item" IsSelected=@(SelectedValue == item) OnSelected=@UpdatedSelected />
+             }
+         </div>
+    }
+    <h3>Session @ActiveSession?.DisplayName</h3>
     <div class="estimates">
         @foreach (var item in ActiveSession?.Participants ?? [])
         {
             var value = @ActiveSession.Backlogs.FirstOrDefault(x => x.Id == ActiveSession.ActiveTaskId)?.Estimates.FirstOrDefault(x => x.ParticipantId == item.Id)?.Value ?? null;
-            value = 2;
             <Estimate Username="@item.DisplayName"
                       Revealed=@ActiveBacklog.IsRevealed Value="@value" />
         }
     </div>
 }
 
-    <style>
-        .header-content {
-            display: flex;
-            flex: 1;
-            justify-content: space-between;
-            align-items: center;
-            width: 100%;
-        }
-    </style>
+<style>
+    .header-content {
+        display: flex;
+        flex: 1;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+    }
+</style>
