@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using MongoDB.Bson.Serialization.Conventions;
 using Radzen;
 using ScrumPoker.Data.Hubs;
 using ScrumPoker.Data.Models;
@@ -13,6 +14,9 @@ builder.Services.AddRazorComponents()
 
 builder.Services.TryAddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 builder.Services.AddRadzenComponents();
+
+var pack = new ConventionPack { new CamelCaseElementNameConvention() };
+ConventionRegistry.Register("CamelCaseConvention", pack, t => true);
 
 builder.Services.Configure<ScrumPokerDatabaseSettings>(builder.Configuration.GetSection("ScrumPokerDatabase"));
 builder.Services.AddSingleton<ISessionService, SessionService>();

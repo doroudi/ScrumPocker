@@ -6,45 +6,45 @@
 
 <PageTitle>Session</PageTitle>
 
-
 <SectionContent SectionName="header">
-    <div class="header-content">
-            <div style="font-weight:bold;margin-right:1rem;font-size:1rem">
-                <span>Session: <a href="@navigation.Uri">@ActiveSession?.Id</a></span>
-            </div>
-            <RadzenButton Variant="Variant.Flat" class="action-button rz-ripple rz-margin-right-4"
-                          ButtonType="ButtonType.Button" Icon="share" Text="Share" Size="ButtonSize.Medium" ButtonStyle="ButtonStyle.Info"
-                          Click=@Share />
+    <div class="rz-display-flex rz-flex-1 rz-justify-content-between rz-align-items-center">
+        <div style="font-weight:bold;margin-right:1rem;font-size:1rem">
+            <span>Session: <a href="@navigation.Uri">@ActiveSession?.Id</a></span>
+        </div>
+        <RadzenButton Variant="Variant.Flat" class="action-button rz-ripple rz-margin-right-4"
+            ButtonType="ButtonType.Button" Icon="share" Text="Share" Size="ButtonSize.Medium"
+            ButtonStyle="ButtonStyle.Info" Click=@Share />
     </div>
 </SectionContent>
 
-@if (ActiveSession != null && userIsJoined)
+@if (ActiveSession != null && UserIsJoined)
 {
-    @if(!IsAdmin){
-         <div class="estimate">
-             @foreach (var item in EstimateOptions)
-             {
-                 <EstimateCard Value="@item" IsSelected=@(SelectedValue == item) OnSelected=@UpdatedSelected />
-             }
-         </div>
+    @if (!IsAdmin)
+    {
+        <h2>User: @(ActiveUser?.DisplayName ?? "Admin")</h2>
+        <div class="estimate rz-display-flex rz-justify-content-center rz-row ">
+            @foreach (var item in EstimateOptions)
+            {
+                <EstimateCard Value="@item" IsSelected=@(SelectedValue == item) OnSelected=@DoEstimate />
+            }
+        </div>
     }
-    <h3>Session @ActiveSession?.DisplayName</h3>
-    <div class="estimates">
-        @foreach (var item in ActiveSession?.Participants ?? [])
+    <RadzenStack AlignItems="AlignItems.Center" Orientation="Orientation.Horizontal"
+        JustifyContent="JustifyContent.SpaceBetween">
+        <h3>Session @ActiveSession?.Title</h3>
+        @if (IsAdmin)
         {
-            var value = @ActiveSession.Backlogs.FirstOrDefault(x => x.Id == ActiveSession.ActiveTaskId)?.Estimates.FirstOrDefault(x => x.ParticipantId == item.Id)?.Value ?? null;
-            <Estimate Username="@item.DisplayName"
-                      Revealed=@ActiveBacklog.IsRevealed Value="@value" />
+            <RadzenButton Variant="Variant.Flat" class="action-button rz-ripple rz-margin-right-4"
+                ButtonType="ButtonType.Button" Icon="delete" Text="Delete Estimates" Size="ButtonSize.Medium"
+                ButtonStyle="ButtonStyle.Secondary" Click=@Share />
+        }
+    </RadzenStack>
+    <div class="estimates">
+        @foreach (var item in ActiveSession.ActiveBacklog.Estimates)
+        {
+            if (item.ParticipantId is null) continue;
+            
+            <Estimate Username="@item.DisplayName" Revealed=@ActiveSession.ActiveBacklog.IsRevealed Value="@item.Value" />
         }
     </div>
 }
-
-<style>
-    .header-content {
-        display: flex;
-        flex: 1;
-        justify-content: space-between;
-        align-items: center;
-        width: 100%;
-    }
-</style>

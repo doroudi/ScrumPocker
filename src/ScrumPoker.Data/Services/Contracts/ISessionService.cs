@@ -1,12 +1,14 @@
 using ErrorOr;
+using ScrumPoker.Data.Dto;
 using ScrumPoker.Data.Models;
 
 namespace ScrumPoker.Data.Services;
 
 public interface ISessionService
 {
-    Task<ErrorOr<Session>> CreateSessionAsync(string creatorId, string sessionName);
-    Task<ErrorOr<Session>> GetSessionByIdAsync(long id, CancellationToken cancellationToken);
-    Task<ErrorOr<Participant>> JoinSessionAsync(long sessionId, string displayName, CancellationToken cancellationToken);
-    Task<ErrorOr<Success>> RemoveParticipantFromSessionAsync(string sessionId, string participantId);
+    Task<ErrorOr<SessionDto>> CreateSessionAsync(string sessionName);
+    Task<ErrorOr<Success>> EstimateTaskAsync(long sessionId, string backlogId, string participantId, int value);
+    Task<ErrorOr<SessionDto>> GetSessionByIdAsync(long id, CancellationToken cancellationToken);
+    Task<ErrorOr<ParticipantDto>> JoinSessionAsync(long sessionId, string displayName, CancellationToken cancellationToken);
+    Task<ErrorOr<Success>> RemoveParticipantFromSessionAsync(long sessionId, string participantId, CancellationToken cancellationToken);
 }

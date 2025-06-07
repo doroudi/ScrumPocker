@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.JSInterop;
 using Radzen;
 using ScrumPoker.Components;
+using ScrumPoker.Data.Dto;
 using ScrumPoker.Data.Models;
 using ScrumPoker.Data.Services;
 
@@ -18,61 +19,47 @@ public partial class PokerSession(
 {
 
     #region  Fields
-    private Session? ActiveSession;
-    private Backlog ActiveBacklog = new();
+    private SessionDto? ActiveSession;
     private HubConnection? _hubConnection;
-    private List<Estimate> Estimates = [];
-    private readonly List<string> EstimateOptions = ["☕", "1", "2", "3", "5", "8", "13"];
-    private bool userIsJoined;
-    private bool IsAdmin => UserId == ActiveSession?.CreatorId;
+    private readonly List<string> EstimateOptions = ["☕", "1", "2", "3", "5", "8", "13"]; //TODO: move to separated file
+    private bool UserIsJoined => ActiveUser != null || IsAdmin;
+    private bool IsAdmin => ActiveUser?.Id == ActiveSession?.CreatorId;
+    private bool _initializationRequired;
+
+    private ParticipantDto? ActiveUser;
 
     private string? SelectedValue { get; set; } = null;
-    #endregion
-
+    #endregion!
     #region Parameters
     [Parameter]
     public required string Id { get; set; }
     #endregion
 
-    private void UpdatedSelected(string value)
-    {
-        if (SelectedValue != value)
-        {
-            InvokeAsync(() =>
-            {
-                SelectedValue = value;
-                StateHasChanged();
-            });
-        }
-    }
+
     #region Hooks
     protected override async Task OnInitializedAsync()
     {
         await InitializeWebSocket();
         ActiveSession = await LoadSession(default);
-        await base.OnInitializedAsync();
+
+        if (UserId != ActiveSession.CreatorId)
+            _initializationRequired = true;
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (!firstRender)
-            return;
-
-        if (UserId is null)
+        if (_initializationRequired)
         {
-            await JoinUserToSession(default);
-            return;
+            if (!UserIsJoined)
+            {
+                _initializationRequired = false;
+                await JoinUserToSession(default);
+            }
         }
-        ActiveSession = await LoadSession(default);
-        if (UserId == ActiveSession.CreatorId && _hubConnection != null)
-        {
-            await _hubConnection.InvokeAsync("CreateSession", ActiveSession.Id.ToString(), UserId);
-        }
-        await base.OnAfterRenderAsync(firstRender);
     }
     #endregion
 
-    public async Task<Session> LoadSession(CancellationToken cancellationToken)
+    public async Task<SessionDto> LoadSession(CancellationToken cancellationToken)
     {
         if (ActiveSession != null)
             return ActiveSession;
@@ -81,6 +68,7 @@ public partial class PokerSession(
             throw new Exception("Id is not valid");
 
         var sessionResult = await sessionService.GetSessionByIdAsync(numericId, cancellationToken);
+
         if (sessionResult.IsError)
             throw new Exception("");
 
@@ -89,25 +77,40 @@ public partial class PokerSession(
 
     public async Task JoinUserToSession(CancellationToken cancellationToken)
     {
-        var username = await dialogService.OpenAsync<EntranceDialog>(
+        var displayName = await dialogService.OpenAsync<EntranceDialog>(
             title: "Enter Name",
             options: new DialogOptions { Width = "470px" });
 
-        if (string.IsNullOrEmpty(username))
-            throw new Exception("");
+        if (string.IsNullOrEmpty(displayName))
+            throw new Exception("Display name cannot be empty");
 
-        if (ActiveSession == null || ActiveSession.Id == null)
-            throw new Exception("");
+        if (ActiveSession == null)
+            throw new Exception("Session is not loaded");
 
-        var result = await sessionService.JoinSessionAsync(ActiveSession.Id.Value, username.ToString(), cancellationToken);
+        var result = await sessionService.JoinSessionAsync(ActiveSession.Id, displayName.ToString(), cancellationToken);
         if (result.IsError)
             return;
 
-        var participant = result.Value as Participant;
-        //TODO: switch to session storage instead of cookie
+        var participant = result.Value as ParticipantDto;
+        ActiveUser = participant;
         await jsRuntime.InvokeVoidAsync("setCookie", "UserId", participant.Id);
-        await JoinToSessionSocket(participant, cancellationToken);
-        userIsJoined = true;
+    }
+
+    private async Task DoEstimate(string value)
+    {
+        if (ActiveSession == null || ActiveUser == null)
+            return;
+
+        if (SelectedValue == value)
+            return;
+        _ = int.TryParse(value, out int estimatedValue);
+
+        await sessionService.EstimateTaskAsync(ActiveSession.Id, ActiveSession.ActiveBacklog.Id, ActiveUser.Id, estimatedValue);
+        await InvokeAsync(() =>
+        {
+            SelectedValue = value;
+            StateHasChanged();
+        });
     }
 
     private async Task JoinToSessionSocket(Participant participant, CancellationToken cancellationToken)
@@ -129,33 +132,30 @@ public partial class PokerSession(
             .Build();
 
 
-        _hubConnection.On<Participant>("UserJoined", async (participant) =>
+        _hubConnection.On<ParticipantDto>("UserJoined", async (participant) =>
         {
+            if(ActiveSession == null)
+                return;
+
+            if (ActiveSession.Participants.Any(p => p.Id == participant.Id))
+                return;
+                
             await InvokeAsync(() =>
             {
-                if (!ActiveSession.Participants.Any(p => p.Id == participant.Id))
-                {
-                    ActiveSession.Participants.Add(participant);
-                    StateHasChanged();
-                    notificationService.Notify(new NotificationMessage
-                    {
-                        Severity = NotificationSeverity.Success,
-                        Summary = "User Joined",
-                        Detail = $"{participant.DisplayName} has joined the session.",
-                        Duration = 3000
-                    });
-                }
+                ActiveSession.Participants.Add(participant);
+                StateHasChanged();
+            });
+
+            notificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Success,
+                Summary = "User Joined",
+                Detail = $"{participant.DisplayName} has joined the session.",
+                Duration = 3000
             });
         });
 
-        _hubConnection.On("SessionCreated", () =>
-        {
-            InvokeAsync(() =>
-            {
-                userIsJoined = true;
-                StateHasChanged();
-            });
-        });
+
 
         _hubConnection.On<string>("UserLeft", userId =>
         {
@@ -170,9 +170,21 @@ public partial class PokerSession(
             });
         });
 
-        _hubConnection.On<List<Estimate>>("Estimate", (estimates) =>
+        _hubConnection.On<EstimateDto>("TaskEstimated", (estimate) =>
         {
-            Estimates = estimates;
+            var existingEstimate = ActiveSession.ActiveBacklog.Estimates.Find(e => e.ParticipantId == estimate.ParticipantId);
+            if(existingEstimate != null)
+            {
+                existingEstimate.Value = estimate.Value;
+            }
+            else
+            {
+                ActiveSession.ActiveBacklog.Estimates.Add(estimate);
+            }
+            InvokeAsync(() =>
+            {
+                StateHasChanged();
+            });
         });
         await _hubConnection.StartAsync();
     }
@@ -180,13 +192,6 @@ public partial class PokerSession(
 
     public async Task Share()
     {
-        notificationService.Notify(new NotificationMessage
-        {
-            Severity = NotificationSeverity.Info,
-            Summary = "Link Copied",
-            Detail = "Session link has been copied to clipboard.",
-            Duration = 3000
-        });
         var url = navigation.Uri.ToString();
         await jsRuntime.InvokeVoidAsync("eval",
         @"
@@ -197,14 +202,25 @@ public partial class PokerSession(
             document.execCommand('copy');
             document.body.removeChild(textArea);
         ");
+
+        notificationService.Notify(new NotificationMessage
+        {
+            Severity = NotificationSeverity.Info,
+            Summary = "Link Copied",
+            Detail = "Session link has been copied to clipboard.",
+            Duration = 3000
+        });
     }
 
     public async ValueTask DisposeAsync()
     {
-        await _hubConnection.InvokeAsync("UserLeft");
         if (_hubConnection != null)
+        {
+            await _hubConnection.InvokeAsync("UserLeft");
             await _hubConnection.DisposeAsync();
+        }
     }
 
-    private string? UserId => httpContextAccessor.HttpContext?.Request.Cookies.FirstOrDefault(c => c.Key == "UserId").Value;
+    private string? UserId =>
+        httpContextAccessor.HttpContext?.Request.Cookies.FirstOrDefault(c => c.Key == "UserId").Value;
 }

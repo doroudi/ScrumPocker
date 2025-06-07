@@ -2,7 +2,7 @@ using ErrorOr;
 
 namespace ScrumPoker.Data.Models;
 
-public static class Errors
+public partial class Errors
 {
     public static class Session
     {
@@ -12,5 +12,8 @@ public static class Errors
         public static Error CannotCreateSession => Error.Failure("Session.CannotCreate");
         public static Error CannotJoinToSession => Error.Failure("Session.CannotJoin");
         public static Error CannotRemoveParticipant => Error.Failure("Session.CannotRemoveParticipant");
+        public static Error UpdateFailed => Error.Failure("Session.UpdateFailed");
+
+        public static Error BacklogNotFound =>  Error.NotFound("Backlog.NotFound");
     }
 }

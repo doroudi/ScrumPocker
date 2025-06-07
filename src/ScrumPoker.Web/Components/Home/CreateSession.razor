@@ -28,7 +28,7 @@
 
     async Task CreateSessionAsync()
     {
-        var session = await SessionService.CreateSessionAsync(Guid.NewGuid().ToString(), SessionName);
+        var session = await SessionService.CreateSessionAsync(SessionName);
         if (session.IsError)
             return;
 

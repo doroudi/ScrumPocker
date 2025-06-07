@@ -1,6 +1,7 @@
 ﻿using DnsClient.Internal;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
+using MongoDB.Bson;
 using ScrumPoker.Data.Models;
 using ScrumPoker.Data.Services;
 using System.Collections.Concurrent;
@@ -11,11 +12,12 @@ public class SessionHub(ILogger<SessionHub> logger, ISessionService sessionServi
 {
     private readonly ConcurrentDictionary<string, string> _connectionToUserMap = [];
 
-    public async Task CreateSession(string sessionId, string creatorId)
+    public async Task CreateSession(Session session)
     {
-        _connectionToUserMap[Context.ConnectionId] = $"{sessionId}|{creatorId}";
-        await Groups.AddToGroupAsync(Context.ConnectionId, sessionId);
-        await Clients.Group(sessionId).SendAsync("SessionCreated");
+        _connectionToUserMap[Context.ConnectionId] = $"{session.Id}|{session.CreatorId}";
+        await Groups.AddToGroupAsync(Context.ConnectionId, session.Id.ToString());
+        var admin = new Participant { Id = ObjectId.Parse(session.CreatorId), DisplayName = "Administrator" };
+        await Clients.Group(session.Id.ToString()).SendAsync("SessionCreated", admin);
     }
 
     public async Task JoinSession(string sessionId, Participant participant)
@@ -38,13 +40,14 @@ public class SessionHub(ILogger<SessionHub> logger, ISessionService sessionServi
             {
                 var sessionId = sessionParticipant.Split('|')[0];
                 var participantId = sessionParticipant.Split('|')[1];
-                await sessionService.RemoveParticipantFromSessionAsync(sessionId, participantId);
-                await Clients.Group(sessionId).SendAsync("UserLeft", participantId);
+                var result = await sessionService.RemoveParticipantFromSessionAsync(long.Parse(sessionId), participantId, default);
+                if(!result.IsError)
+                    await Clients.Group(sessionId).SendAsync("UserLeft", participantId);
             }
         }
         catch (Exception ex)
         {
-            logger.LogError("Cannot remove user");
+            logger.LogError($"Cannot remove user, {ex.Message}");
         }
         await base.OnDisconnectedAsync(exception);
     }
