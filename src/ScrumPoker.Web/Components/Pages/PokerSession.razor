@@ -12,12 +12,11 @@
             <span>SessionID: <a href="@navigation.Uri">@ActiveSession?.Id</a></span>
         </div>
         <RadzenButton Variant="Variant.Flat" class="action-button rz-ripple rz-margin-right-4"
-            ButtonType="ButtonType.Button" Icon="share" Size="ButtonSize.Medium"
-            ButtonStyle="ButtonStyle.Primary" Click=@Share />
+            ButtonType="ButtonType.Button" Icon="share" Size="ButtonSize.Medium" ButtonStyle="ButtonStyle.Primary"
+            Click=@Share />
     </div>
 </SectionContent>
 
-ISADMIN: @IsAdmin , UserJoined: @UserIsJoined, ActiveSession: @ActiveSession?.Id
 @if (ActiveSession != null && UserIsJoined)
 {
     @if (!IsAdmin)
@@ -35,16 +34,43 @@ ISADMIN: @IsAdmin , UserJoined: @UserIsJoined, ActiveSession: @ActiveSession?.Id
         <h3>Session @ActiveSession?.Title</h3>
         @if (IsAdmin)
         {
-            <RadzenButton Variant="Variant.Flat" class="action-button rz-ripple rz-margin-right-4"
-                ButtonType="ButtonType.Button" Icon="delete" Text="Delete Estimates" Size="ButtonSize.Medium"
-                ButtonStyle="ButtonStyle.Secondary" Click=@Share />
+
+            @if (ActiveSession.ActiveBacklog.Estimates.Any()){
+                <RadzenButton Variant="Variant.Flat" class="action-button rz-ripple rz-margin-right-4"
+                    ButtonType="ButtonType.Button" Icon="delete" Text="Delete Estimates" Size="ButtonSize.Medium"
+                    ButtonStyle="ButtonStyle.Secondary" Click=@DeleteEstimates />
+
+                <RadzenButton Variant="Variant.Flat" class="action-button rz-ripple rz-margin-right-4"
+                    ButtonType="ButtonType.Button" Icon="visibility" Text="Delete Estimates" Size="ButtonSize.Medium"
+                    ButtonStyle="ButtonStyle.Success" Click=@RevealResults />
+            }
         }
     </RadzenStack>
-    <div class="estimates">
-        @foreach (var item in ActiveSession.ActiveBacklog.Estimates)
-        {
-            if (item.ParticipantId is null) continue;
-            <Estimate Username="@item.DisplayName" Revealed=@ActiveSession.ActiveBacklog.IsRevealed Value="@item.Value" />
-        }
-    </div>
+    @if (ActiveSession.ActiveBacklog.Estimates.Any())
+    {
+        <div class="estimates">
+            @foreach (var item in ActiveSession.ActiveBacklog.Estimates)
+            {
+                if (item.ParticipantId is null) continue;
+                <Estimate Username="@item.DisplayName" Revealed=@ActiveSession.ActiveBacklog.IsRevealed Value="@item.Value" />
+            }
+        </div>
+    }
+    else
+    {
+        <div>
+            <RadzenStack AlignItems="AlignItems.Center" JustifyContent="JustifyContent.Center" class="rz-mt-8">
+                <div class="rz-my-10">
+                    <ScrumPoker.Web.Components.Common.Loading  />
+                </div>
+
+                <RadzenText Text="Waiting others to join..." TextStyle="TextStyle.Subtitle1" class="rz-mt-12"/>
+                <RadzenButton Variant="Variant.Filled" class="rz-ripple"
+                    ButtonType="ButtonType.Button" Icon="share" Size="ButtonSize.Medium" Text="Copy joining link"
+                    ButtonStyle="ButtonStyle.Info" Click=@Share />
+
+            </RadzenStack>
+
+        </div>
+    }
 }

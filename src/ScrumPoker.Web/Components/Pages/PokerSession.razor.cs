@@ -119,6 +119,16 @@ public partial class PokerSession(
         });
     }
 
+    private void DeleteEstimates()
+    {
+        
+    }
+
+    private void RevealResults()
+    {
+
+    }
+
     private async Task SetAdminUser()
     {
         ActiveUser = new ParticipantDto

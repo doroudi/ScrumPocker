@@ -1,0 +1,152 @@
+﻿<div class="loader">
+    @foreach(var item in items) {
+        <div class="card">
+            <div class="number-container">
+                <div class="number @item"></div>
+            </div>
+            <div class="number-container" style="rotate: 180deg; margin-left: 22px; margin-top: 0px">
+                <div class="number @item"></div>
+            </div>
+        </div>
+    }
+
+    <div class="card">
+        <div class="number-container">
+            <div class="number">
+                <RadzenIcon icon="local_cafe" Style="font-size:1.6rem"/>
+            </div>
+        </div>
+        <div class="number-container" style="rotate: 180deg; margin-left: 36px; margin-top: 0px">
+            <div class="number">
+                <RadzenIcon icon="local_cafe" Style="font-size:1.6rem" />
+            </div>
+        </div>
+        
+    </div>
+</div>
+
+@code {
+    List<string> items = ["eight", "five", "three", "two", "one"];
+}
+<style>
+    .loader {
+        height: 200px;
+        width: 200px;
+        position: relative;
+        margin-top: -25%;
+        margin-right: -100px;;
+    }
+
+    .loader div {
+        position: absolute;
+        transform-origin: 50% 125%;
+    }
+
+    .loader div:nth-child(1) {
+        animation-delay: 0.7s;
+    }
+
+    .loader div:nth-child(2) {
+        animation-delay: 0.6s;
+    }
+
+    .loader div:nth-child(3) {
+        animation-delay: 0.5s;
+    }
+
+    .loader div:nth-child(4) {
+        animation-delay: 0.4s;
+    }
+
+    .loader div:nth-child(5) {
+        animation-delay: 0.3s;
+    }
+
+    .loader div:nth-child(6) {
+        animation-delay: 0.2s;
+    }
+
+    .loader div:nth-child(7) {
+        animation-delay: 0.1s;
+    }
+
+    .loader div:nth-child(8) {
+        animation-delay: 0s;
+    }
+
+    .card {
+        position: relative;
+        height: 120px;
+        width: 90px;
+        background: white;
+        border-radius: 10%;
+        border: 1px solid rgb(224, 186, 136);
+        place-items: center;
+        animation: spin 4s ease infinite;
+    }
+
+    .number-container {
+        position: absolute;
+        height: 37%;
+        margin: 10px 0 0 50px;
+    }
+
+    .number {
+        position: absolute;
+        left: -36px;
+        top: -9px;
+        width: 20px;
+        height: 25px;
+        font-size: 2.1rem;
+        font-weight: bold;
+        text-align: center;
+    }
+
+    .number::before {
+        position: absolute;
+        content: "";
+        left: 0;
+        top: 0;
+        width: 20px;
+        height: 25px;
+    }
+
+    .number.coffee::before {
+        content: "🍵";
+    }
+
+    .number.one::before {
+        content: "1";
+    }
+
+    .number.two::before {
+        content: "2";
+    }
+
+    .number.three::before {
+        content: "3";
+    }
+
+    .number.five::before {
+        content: "5";
+    }
+
+    .number.eight::before {
+        content: "8";
+    }
+
+    @@keyframes spin {
+        0% {
+            rotate: -360deg;
+        }
+
+        80%,
+        100% {
+            rotate: 0deg;
+        }
+    }
+</style>
+
+@code {
+
+}
