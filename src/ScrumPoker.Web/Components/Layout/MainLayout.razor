@@ -1,14 +1,15 @@
 ﻿@using Microsoft.AspNetCore.Components.Sections
 @inherits LayoutComponentBase
 
+
 <RadzenComponents @rendermode="InteractiveServer" />
 
 <RadzenLayout>
-    <RadzenHeader>
+    <RadzenHeader >
         <div class="header">
             <div class="rz-col-7 bg-inner">
                 <RadzenLink Path="/" Text=" ScrumPoker" Icon="filter_3" style="font-size:1.2rem;font-weight: bold;" />
-                <SectionOutlet SectionName="header" />
+                <SectionOutlet SectionName="header" @rendermode="InteractiveServer" />
             </div>
         </div>
     </RadzenHeader>
