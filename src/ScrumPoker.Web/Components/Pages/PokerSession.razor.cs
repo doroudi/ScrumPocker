@@ -44,6 +44,11 @@ public partial class PokerSession(
 
         if (UserId != ActiveSession.CreatorId)
             _initializationRequired = true;
+        else
+        {
+            await SetAdminUser();
+            StateHasChanged();
+        }
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -93,6 +98,7 @@ public partial class PokerSession(
 
         var participant = result.Value as ParticipantDto;
         ActiveUser = participant;
+        StateHasChanged();
         await jsRuntime.InvokeVoidAsync("setCookie", "UserId", participant.Id);
     }
 
@@ -111,6 +117,15 @@ public partial class PokerSession(
             SelectedValue = value;
             StateHasChanged();
         });
+    }
+
+    private async Task SetAdminUser()
+    {
+        ActiveUser = new ParticipantDto
+        {
+            Id = ActiveSession.CreatorId,
+            DisplayName = "Admin"
+        };
     }
 
     private async Task JoinToSessionSocket(Participant participant, CancellationToken cancellationToken)
@@ -132,7 +147,7 @@ public partial class PokerSession(
             .Build();
 
 
-        _hubConnection.On<ParticipantDto>("UserJoined", async (participant) =>
+        _hubConnection.On<ParticipantDto>("ParticipantJoined", async (participant) =>
         {
             if(ActiveSession == null)
                 return;
@@ -157,7 +172,7 @@ public partial class PokerSession(
 
 
 
-        _hubConnection.On<string>("UserLeft", userId =>
+        _hubConnection.On<string>("ParticipantLeft", userId =>
         {
             InvokeAsync(() =>
             {

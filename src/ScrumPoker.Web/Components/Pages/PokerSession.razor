@@ -4,19 +4,20 @@
 
 @rendermode InteractiveServer
 
-<PageTitle>Session</PageTitle>
+<PageTitle>Session @ActiveSession?.Title</PageTitle>
 
 <SectionContent SectionName="header">
-    <div class="rz-display-flex rz-flex-1 rz-justify-content-between rz-align-items-center">
+    <div class="rz-display-flex rz-justify-content-between rz-align-items-center">
         <div style="font-weight:bold;margin-right:1rem;font-size:1rem">
-            <span>Session: <a href="@navigation.Uri">@ActiveSession?.Id</a></span>
+            <span>SessionID: <a href="@navigation.Uri">@ActiveSession?.Id</a></span>
         </div>
         <RadzenButton Variant="Variant.Flat" class="action-button rz-ripple rz-margin-right-4"
-            ButtonType="ButtonType.Button" Icon="share" Text="Share" Size="ButtonSize.Medium"
-            ButtonStyle="ButtonStyle.Info" Click=@Share />
+            ButtonType="ButtonType.Button" Icon="share" Size="ButtonSize.Medium"
+            ButtonStyle="ButtonStyle.Primary" Click=@Share />
     </div>
 </SectionContent>
 
+ISADMIN: @IsAdmin , UserJoined: @UserIsJoined, ActiveSession: @ActiveSession?.Id
 @if (ActiveSession != null && UserIsJoined)
 {
     @if (!IsAdmin)
@@ -43,7 +44,6 @@
         @foreach (var item in ActiveSession.ActiveBacklog.Estimates)
         {
             if (item.ParticipantId is null) continue;
-            
             <Estimate Username="@item.DisplayName" Revealed=@ActiveSession.ActiveBacklog.IsRevealed Value="@item.Value" />
         }
     </div>

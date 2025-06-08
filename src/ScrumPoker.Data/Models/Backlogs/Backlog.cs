@@ -13,15 +13,16 @@ public class Backlog
 
     public bool IsRevealed { get; private set; }
 
-    public static Backlog Create()
+    public static Backlog Create(long sessionId, string? description = null)
     {
         return new Backlog
         {
             Id = ObjectId.GenerateNewId(),
+            SessionId = sessionId,
+            Description = description,
             IsRevealed = false,
         };
     }
-
 
     public void Reveal()
     {

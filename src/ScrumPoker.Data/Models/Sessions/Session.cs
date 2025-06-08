@@ -25,7 +25,6 @@ public class Session
     #region Constructor
     internal static Session Create(string sessionName, string userId)
     {
-        var defaultBacklog = Backlog.Create();
         return new Session
         {
             Id = GenerateRandomId(),
@@ -33,7 +32,6 @@ public class Session
             CreatedAtUtc = DateTime.UtcNow,
             IsActive = true,
             CreatorId = userId,
-            ActiveTaskId = defaultBacklog.Id
         };
     }
 
@@ -47,7 +45,7 @@ public class Session
     #endregion
 
     #region Mappings
-    public SessionDto ToDto(List<ParticipantDto>? participants = null, List<BacklogDto>? backlogs = null)
+    public SessionDto ToDto(List<ParticipantDto> participants, List<BacklogDto> backlogs)
     {
         return new SessionDto
         {
@@ -56,7 +54,8 @@ public class Session
             CreatorId = CreatorId,
             IsExpired = IsExpired,
             Participants = participants ?? [],
-            Backlogs = backlogs ?? []
+            Backlogs = backlogs ?? [],
+            ActiveBacklog = backlogs.First(b => b.Id == ActiveTaskId.ToString()),
         };
     }
    

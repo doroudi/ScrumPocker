@@ -6,7 +6,7 @@ public class SessionDto
     public string? Title { get; set; }
     public required string CreatorId { get; set; }
     public bool IsExpired { get; set; }
-    public BacklogDto ActiveBacklog { get; set; }
+    public required BacklogDto ActiveBacklog { get; set; }
     public List<ParticipantDto> Participants { get; set; } = [];
     public List<BacklogDto>? Backlogs { get; set; } = [];
 }

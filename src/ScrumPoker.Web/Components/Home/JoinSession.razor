@@ -3,37 +3,52 @@
 @inject DialogService DialogService
 @inject ISessionService SessionService
 @inject NavigationManager NavigationManager
+@inject NotificationService NotificationService
 @inject IJSRuntime jsRuntime
 
 <RadzenStack Gap="1.5rem">
-    <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem" AlignItems="AlignItems.Stretch"
-        JustifyContent="JustifyContent.SpaceBetween">
-        <RadzenText TextStyle="TextStyle.Body1">
-            Wanna Join a session? 👆
-        </RadzenText>
-        <div class="rz-my-2">
-            <RadzenTextBox  @bind-Value="SessionId" Style="width:100%" Placeholder="SessionId" />
-        </div>
-        <RadzenStack Orientation="Orientation.Horizontal">
-            <RadzenButton Text="Join" Click=@HandleJoinSession ButtonType="ButtonType.Submit"
-                ButtonStyle="ButtonStyle.Primary" icon="arrow_forward" Style="width: 80px;" />
-            <RadzenButton Text="Cancel" Click="() => DialogService.Close(false)" ButtonStyle="ButtonStyle.Light" />
+    <RadzenTemplateForm TItem="JoinSessionModel" Data=@model Submit=@OnJoinSession>
+
+        <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem" AlignItems="AlignItems.Stretch"
+            JustifyContent="JustifyContent.SpaceBetween">
+            <RadzenText TextStyle="TextStyle.Body1">
+                Wanna Join a session?
+            </RadzenText>
+
+            <RadzenFormField Text="SessionID">
+                <ChildContent>
+                    <RadzenTextBox Name="SessionId" @bind-Value="@model.SessionId" Style="width:100%" Placeholder="Session Name" />
+                </ChildContent>
+                <Helper>
+                    <RadzenRequiredValidator Component="SessionId" Text="SessionId is required." />
+                </Helper>
+            </RadzenFormField>
+            <RadzenStack Orientation="Orientation.Horizontal">
+                <RadzenButton Text="Join" ButtonType="ButtonType.Submit"
+                    ButtonStyle="ButtonStyle.Primary" icon="arrow_forward" Style="width: 80px;" />
+                <RadzenButton Text="Cancel" Click="() => DialogService.Close(false)" ButtonStyle="ButtonStyle.Light" />
+            </RadzenStack>
         </RadzenStack>
-    </RadzenStack>
+    </RadzenTemplateForm>
 </RadzenStack>
 
 
 @code {
-    string? SessionId { get; set; }
+    class JoinSessionModel {
+        public string SessionId { get; set; } = string.Empty;
+        
+    }
 
-    void HandleJoinSession() {
-        if (string.IsNullOrEmpty(SessionId))
+    JoinSessionModel model = new();
+
+    void OnJoinSession()
+    {
+        if (!long.TryParse(model.SessionId, out var numericId)) {
+            NotificationService.Notify(NotificationSeverity.Success, "Success", "Session Created!");
             return;
-
-        if(!long.TryParse(SessionId, out var numericId))
-            throw new Exception("ID is not valid");
-
+        }
+        //TODO: get session for check validity
         DialogService.Close(true);
-        NavigationManager.NavigateTo($"/Session/{SessionId}", true);
+        NavigationManager.NavigateTo($"/Session/{model.SessionId}", true);
     }
 }

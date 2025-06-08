@@ -5,8 +5,9 @@
 
 <RadzenLayout>
     <RadzenHeader>
-        <div class="rz-display-flex rz-justify-content-center rz-row rz-mx-auto rz-py-2 rz-px-4">
-            <div class="rz-col-7">
+        <div class="header">
+            <div class="rz-col-7 bg-inner">
+                <RadzenLink Path="/" Text=" ScrumPoker" Icon="filter_3" style="font-size:1.2rem;font-weight: bold;" />
                 <SectionOutlet SectionName="header" />
             </div>
         </div>
@@ -19,11 +20,22 @@
             </div>
         </div>
     </RadzenBody>
-
 </RadzenLayout>
 
 <style>
-    .header {
-        
-    }
+.header {
+    height: 100%;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+
+}
+
+.bg-inner {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex:.6;
+}
 </style>

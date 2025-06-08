@@ -1,38 +1,57 @@
 @using Radzen
+@using System.Text.Json
 
 @namespace ScrumPoker.Components
 @inject DialogService DialogService
 @inject ISessionService SessionService
 @inject NavigationManager NavigationManager
 @inject IHttpContextAccessor HttpContextAccessor
+@inject NotificationService NotificationService
 @inject IJSRuntime jsRuntime
 
 <RadzenStack Gap="1.5rem">
-    <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem" AlignItems="AlignItems.Stretch"
-        JustifyContent="JustifyContent.SpaceBetween">
-        <RadzenText TextStyle="TextStyle.Body1">
-            To create a new session, please enter a name for the session:
-        </RadzenText>
-        <div class="rz-my-2">
-            <RadzenTextBox @bind-Value="SessionName" Style="width:100%" Placeholder="Session Name"  />
-        </div>
-        <RadzenStack Orientation="Orientation.Horizontal">
-            <RadzenButton Text="Create" Click=@CreateSessionAsync ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Success" Style="width: 80px;" />
-            <RadzenButton Text="Cancel" Click="() => DialogService.Close(false)" ButtonStyle="ButtonStyle.Light" />
+    <RadzenTemplateForm TItem="CreateSessionModel" Data=@model Submit=@OnCreateSession>
+        <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem" AlignItems="AlignItems.Stretch"
+            JustifyContent="JustifyContent.SpaceBetween">
+            <RadzenText TextStyle="TextStyle.Body1">
+                To create a new session, please enter a name for the session:
+            </RadzenText>
+            <RadzenFormField Text="Session Name">
+                <ChildContent>
+                    <RadzenTextBox Name="SessionName" @bind-Value="@model.SessionName" Style="width:100%" Placeholder="Session Name" />
+                </ChildContent>
+                <Helper>
+                    <RadzenRequiredValidator Component="SessionName" Text="Session name is required." />
+                </Helper>
+            </RadzenFormField>
+            <RadzenStack Orientation="Orientation.Horizontal">
+                <RadzenButton Text="Create" ButtonType="ButtonType.Submit"
+                    ButtonStyle="ButtonStyle.Success" Style="width: 80px;" />
+                <RadzenButton Text="Cancel" Click="() => DialogService.Close(false)" ButtonStyle="ButtonStyle.Light" />
+            </RadzenStack>
         </RadzenStack>
-    </RadzenStack>
+    </RadzenTemplateForm>
 </RadzenStack>
 
 @code {
-    string SessionName { get; set; } = string.Empty;
+    public class CreateSessionModel {
+        public string SessionName { get; set; }
+        public string CreatorName { get;set; } = string.Empty;
+    }
 
-    async Task CreateSessionAsync()
+    CreateSessionModel model = new();
+
+    async Task OnCreateSession()
     {
-        var session = await SessionService.CreateSessionAsync(SessionName);
+        var session = await SessionService.CreateSessionAsync(model.SessionName);
         if (session.IsError)
             return;
 
+        NotificationService.Notify(NotificationSeverity.Success, "Success", "Session Created!");
         await jsRuntime.InvokeVoidAsync("setCookie", "UserId", session.Value.CreatorId);
         NavigationManager.NavigateTo($"/Session/{session.Value.Id}", true);
     }
+
+
+    
 }

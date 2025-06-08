@@ -47,11 +47,21 @@ public class SessionService : ISessionService
     {
         var userId = GetOrCreateUserId();
         var newSession = Session.Create(sessionName, userId);
+        var newBacklog = Backlog.Create(newSession.Id.Value, userId);
+
+       
 
         try
         {
             await _sessions.InsertOneAsync(newSession);
-            return newSession.ToDto();
+            await _backlogs.InsertOneAsync(newBacklog);
+
+            _sessions.UpdateOne(x => x.Id == newSession.Id,
+                Builders<Session>.Update.Set(x => x.ActiveTaskId, newBacklog.Id),
+                new UpdateOptions { IsUpsert = true });
+
+            newSession.ActiveTaskId = newBacklog.Id;
+            return newSession.ToDto([], [newBacklog.ToDto()]); //TODO: should improved
         }
         catch (Exception)
         {
