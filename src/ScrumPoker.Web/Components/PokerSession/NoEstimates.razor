@@ -1,0 +1,41 @@
+﻿@inject NavigationManager navigation
+@inject NotificationService notificationService
+@inject IJSRuntime jsRuntime
+
+<div>
+    <RadzenStack AlignItems="AlignItems.Center" JustifyContent="JustifyContent.Center" class="rz-mt-8">
+        <div class="rz-my-10">
+            <ScrumPoker.Web.Components.Common.Loading />
+        </div>
+
+        <RadzenText Text="Waiting others to join..." TextStyle="TextStyle.Subtitle1" class="rz-mt-12" />
+        <RadzenButton Variant="Variant.Filled" class="rz-ripple" ButtonType="ButtonType.Button" Icon="share"
+            Size="ButtonSize.Medium" Text="Copy joining link" ButtonStyle="ButtonStyle.Info" Click=@Share />
+
+    </RadzenStack>
+
+</div>
+
+@code {
+    public async Task Share()
+    {
+        var url = navigation.Uri.ToString();
+        await jsRuntime.InvokeVoidAsync("eval",
+        @"
+        const textArea = document.createElement('textarea');
+        textArea.value = '" + url + @"';
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+        ");
+
+        notificationService.Notify(new NotificationMessage
+        {
+            Severity = NotificationSeverity.Info,
+            Summary = "Link Copied",
+            Detail = "Session link has been copied to clipboard.",
+            Duration = 3000
+        });
+    }
+}

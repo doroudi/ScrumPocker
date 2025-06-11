@@ -19,15 +19,13 @@
 
 @if (ActiveSession != null && UserIsJoined)
 {
+    @if(IsAdmin){
+        <h2>Admin 🎖️</h2>
+    }
     @if (!IsAdmin)
     {
-        <h2>User: @(ActiveUser?.DisplayName ?? "Admin")</h2>
-        <div class="estimate rz-display-flex rz-justify-content-center rz-row ">
-            @foreach (var item in EstimateOptions)
-            {
-                <EstimateCard Value="@item" IsSelected=@(SelectedValue == item) OnSelected=@DoEstimate />
-            }
-        </div>
+        <h2>User: @ActiveUser?.DisplayName</h2>
+        <EstimateCards OnEstimate=@DoEstimate />
     }
     <RadzenStack AlignItems="AlignItems.Center" Orientation="Orientation.Horizontal"
         JustifyContent="JustifyContent.SpaceBetween">
@@ -46,31 +44,17 @@
             }
         }
     </RadzenStack>
-    @if (ActiveSession.ActiveBacklog.Estimates.Any())
+    @if (ActiveSession.Participants.Any())
     {
         <div class="estimates">
-            @foreach (var item in ActiveSession.ActiveBacklog.Estimates)
+            @foreach (var item in ActiveSession.Participants)
             {
-                if (item.ParticipantId is null) continue;
-                <Estimate Username="@item.DisplayName" Revealed=@ActiveSession.ActiveBacklog.IsRevealed Value="@item.Value" />
+                <Estimate Username="@item.DisplayName" Revealed=@ActiveSession.ActiveBacklog.IsRevealed />
             }
         </div>
     }
-    else
+    else if(IsAdmin)
     {
-        <div>
-            <RadzenStack AlignItems="AlignItems.Center" JustifyContent="JustifyContent.Center" class="rz-mt-8">
-                <div class="rz-my-10">
-                    <ScrumPoker.Web.Components.Common.Loading  />
-                </div>
-
-                <RadzenText Text="Waiting others to join..." TextStyle="TextStyle.Subtitle1" class="rz-mt-12"/>
-                <RadzenButton Variant="Variant.Filled" class="rz-ripple"
-                    ButtonType="ButtonType.Button" Icon="share" Size="ButtonSize.Medium" Text="Copy joining link"
-                    ButtonStyle="ButtonStyle.Info" Click=@Share />
-
-            </RadzenStack>
-
-        </div>
+        <NoEstimates />
     }
 }

@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
 using MongoDB.Bson;
+using ScrumPoker.Data.Dto;
 using ScrumPoker.Data.Models;
 using ScrumPoker.Data.Services;
 using System.Collections.Concurrent;
@@ -20,7 +21,7 @@ public class SessionHub(ILogger<SessionHub> logger, ISessionService sessionServi
         await Clients.Group(session.Id.ToString()).SendAsync("SessionCreated", admin);
     }
 
-    public async Task JoinSession(string sessionId, Participant participant)
+    public async Task JoinSession(string sessionId, ParticipantDto participant)
     {
         _connectionToUserMap[Context.ConnectionId] = $"{sessionId}|{participant.Id}";
 

@@ -1,0 +1,23 @@
+﻿<div class="estimate rz-display-flex rz-justify-content-center rz-row ">
+    @foreach (var item in EstimateOptions)
+    {
+        <EstimateCard Value="@item" IsSelected=@(SelectedValue == item) OnSelected=@DoEstimate />
+    }
+</div>
+
+@code {
+    public string? SelectedValue { get; set; } = null;
+
+    [Parameter]
+    public EventCallback<string> OnEstimate { get; set; }
+    private readonly List<string> EstimateOptions = ["☕", "1", "2", "3", "5", "8", "13"]; //TODO: move to separated file
+    private void DoEstimate(string value)
+    {
+        if(SelectedValue == value)
+            return;
+            
+        OnEstimate.InvokeAsync(value);
+        SelectedValue = value;
+    }
+
+}

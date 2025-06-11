@@ -21,14 +21,13 @@ public partial class PokerSession(
     #region  Fields
     private SessionDto? ActiveSession;
     private HubConnection? _hubConnection;
-    private readonly List<string> EstimateOptions = ["☕", "1", "2", "3", "5", "8", "13"]; //TODO: move to separated file
+    
     private bool UserIsJoined => ActiveUser != null || IsAdmin;
     private bool IsAdmin => ActiveUser?.Id == ActiveSession?.CreatorId;
     private bool _initializationRequired;
 
     private ParticipantDto? ActiveUser;
 
-    private string? SelectedValue { get; set; } = null;
     #endregion!
     #region Parameters
     [Parameter]
@@ -98,8 +97,9 @@ public partial class PokerSession(
 
         var participant = result.Value as ParticipantDto;
         ActiveUser = participant;
-        StateHasChanged();
         await jsRuntime.InvokeVoidAsync("setCookie", "UserId", participant.Id);
+        await JoinToSessionSocket(ActiveUser, cancellationToken);
+        StateHasChanged();
     }
 
     private async Task DoEstimate(string value)
@@ -107,14 +107,11 @@ public partial class PokerSession(
         if (ActiveSession == null || ActiveUser == null)
             return;
 
-        if (SelectedValue == value)
-            return;
         _ = int.TryParse(value, out int estimatedValue);
 
         await sessionService.EstimateTaskAsync(ActiveSession.Id, ActiveSession.ActiveBacklog.Id, ActiveUser.Id, estimatedValue);
         await InvokeAsync(() =>
         {
-            SelectedValue = value;
             StateHasChanged();
         });
     }
@@ -136,9 +133,11 @@ public partial class PokerSession(
             Id = ActiveSession.CreatorId,
             DisplayName = "Admin"
         };
+
+        await JoinToSessionSocket(ActiveUser, default);
     }
 
-    private async Task JoinToSessionSocket(Participant participant, CancellationToken cancellationToken)
+    private async Task JoinToSessionSocket(ParticipantDto participant, CancellationToken cancellationToken)
     {
         if (_hubConnection != null && _hubConnection.State == HubConnectionState.Connected)
             await _hubConnection.InvokeAsync("JoinSession", ActiveSession?.Id.ToString(), participant, cancellationToken: cancellationToken);

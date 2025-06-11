@@ -49,8 +49,6 @@ public class SessionService : ISessionService
         var newSession = Session.Create(sessionName, userId);
         var newBacklog = Backlog.Create(newSession.Id.Value, userId);
 
-       
-
         try
         {
             await _sessions.InsertOneAsync(newSession);
@@ -61,6 +59,7 @@ public class SessionService : ISessionService
                 new UpdateOptions { IsUpsert = true });
 
             newSession.ActiveTaskId = newBacklog.Id;
+            await SendSocketEventToClientsAsync("SessionCreated", newSession.Id.Value, newSession, default);
             return newSession.ToDto([], [newBacklog.ToDto()]); //TODO: should improved
         }
         catch (Exception)
