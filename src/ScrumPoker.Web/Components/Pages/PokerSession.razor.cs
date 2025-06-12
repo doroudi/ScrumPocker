@@ -4,7 +4,6 @@ using Microsoft.JSInterop;
 using Radzen;
 using ScrumPoker.Components;
 using ScrumPoker.Data.Dto;
-using ScrumPoker.Data.Models;
 using ScrumPoker.Data.Services;
 
 namespace ScrumPoker.Web.Components.Pages;
@@ -21,19 +20,17 @@ public partial class PokerSession(
     #region  Fields
     private SessionDto? ActiveSession;
     private HubConnection? _hubConnection;
-    
     private bool UserIsJoined => ActiveUser != null || IsAdmin;
     private bool IsAdmin => ActiveUser?.Id == ActiveSession?.CreatorId;
     private bool _initializationRequired;
-
     private ParticipantDto? ActiveUser;
 
     #endregion!
+    
     #region Parameters
     [Parameter]
     public required string Id { get; set; }
     #endregion
-
 
     #region Hooks
     protected override async Task OnInitializedAsync()
@@ -41,12 +38,16 @@ public partial class PokerSession(
         await InitializeWebSocket();
         ActiveSession = await LoadSession(default);
 
+        if (ActiveSession.Participants.Any(x => x.Id == UserId))
+        {
+            return;
+        }
+            
         if (UserId != ActiveSession.CreatorId)
             _initializationRequired = true;
         else
         {
             await SetAdminUser();
-            StateHasChanged();
         }
     }
 
@@ -99,7 +100,8 @@ public partial class PokerSession(
         ActiveUser = participant;
         await jsRuntime.InvokeVoidAsync("setCookie", "UserId", participant.Id);
         await JoinToSessionSocket(ActiveUser, cancellationToken);
-        StateHasChanged();
+        ActiveSession.Participants.Add(participant);
+        await InvokeAsync(StateHasChanged);
     }
 
     private async Task DoEstimate(string value)
@@ -110,10 +112,7 @@ public partial class PokerSession(
         _ = int.TryParse(value, out int estimatedValue);
 
         await sessionService.EstimateTaskAsync(ActiveSession.Id, ActiveSession.ActiveBacklog.Id, ActiveUser.Id, estimatedValue);
-        await InvokeAsync(() =>
-        {
-            StateHasChanged();
-        });
+        await InvokeAsync(StateHasChanged);
     }
 
     private void DeleteEstimates()
@@ -154,7 +153,6 @@ public partial class PokerSession(
                 TimeSpan.FromSeconds(10)
             ])
             .Build();
-
 
         _hubConnection.On<ParticipantDto>("ParticipantJoined", async (participant) =>
         {
