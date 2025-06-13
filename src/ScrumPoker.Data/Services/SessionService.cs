@@ -5,6 +5,7 @@ using Microsoft.Extensions.Options;
 using MongoDB.Bson;
 using MongoDB.Driver;
 using ScrumPoker.Data.Dto;
+using ScrumPoker.Data.Dto.Backlogs;
 using ScrumPoker.Data.Hubs;
 using ScrumPoker.Data.Models;
 
@@ -54,12 +55,11 @@ public class SessionService : ISessionService
             await _sessions.InsertOneAsync(newSession);
             await _backlogs.InsertOneAsync(newBacklog);
 
-            _sessions.UpdateOne(x => x.Id == newSession.Id,
+            await _sessions.UpdateOneAsync(x => x.Id == newSession.Id,
                 Builders<Session>.Update.Set(x => x.ActiveTaskId, newBacklog.Id),
                 new UpdateOptions { IsUpsert = true });
 
             newSession.ActiveTaskId = newBacklog.Id;
-            // await SendSocketEventToClientsAsync("SessionCreated", newSession.Id.Value, newSession, default);
             return newSession.ToDto([], [newBacklog.ToDto()]); //TODO: should improved
         }
         catch (Exception)
@@ -198,6 +198,34 @@ public class SessionService : ISessionService
     private async Task SendSocketEventToClientsAsync(string eventName, long sessionId, object data, CancellationToken cancellationToken)
     {
         await _hubContext.Clients.Group(sessionId.ToString()).SendAsync(eventName, data, cancellationToken);
+    }
+
+    public async Task<ErrorOr<Success>> RevealResultsAsync(long sessionId, CancellationToken cancellationToken)
+    {
+        //TODO: check for admin role of caller
+        var session = _sessions.Find(x => x.Id == sessionId).FirstOrDefault();
+        if (session is null)
+            return Errors.Session.SessionNotFound;
+
+        var estimates = _estimates.Find(x => x.BacklogId == session.ActiveTaskId).ToList();
+        //TODO: make active backlog revealed
+        var backlog = _backlogs.Find(x => x.Id == session.ActiveTaskId).FirstOrDefault();
+
+        await _backlogs.UpdateOneAsync(x => x.Id == backlog.Id,
+                Builders<Backlog>.Update.Set(x => x.IsRevealed, true), cancellationToken: cancellationToken);
+
+        var resultSummary = new BacklogEstimateSummaryDto
+        {
+            Estimates = estimates.Select(e => e.ToDto()).ToList(),
+            BacklogId = session.ActiveTaskId.ToString(),
+            Average = estimates.Average(e => e.Value),
+            Mood = estimates.GroupBy(e => e.Value)
+                        .OrderByDescending(g => g.Count())
+                        .FirstOrDefault()?.Key ?? 0,
+        };
+
+        await SendSocketEventToClientsAsync("EstimationRevealed", sessionId, resultSummary, default);
+        return Result.Success;
     }
     #endregion
 }

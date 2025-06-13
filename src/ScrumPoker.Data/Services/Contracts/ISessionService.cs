@@ -11,4 +11,5 @@ public interface ISessionService
     Task<ErrorOr<SessionDto>> GetSessionByIdAsync(long id, CancellationToken cancellationToken);
     Task<ErrorOr<ParticipantDto>> JoinSessionAsync(long sessionId, string displayName, CancellationToken cancellationToken);
     Task<ErrorOr<Success>> RemoveParticipantFromSessionAsync(long sessionId, string participantId, CancellationToken cancellationToken);
+    Task<ErrorOr<Success>> RevealResultsAsync(long sessionId, CancellationToken cancellationToken);
 }

@@ -1,9 +1,11 @@
-﻿using Microsoft.AspNetCore.Components;
+﻿using System.Threading.Tasks;
+using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.JSInterop;
 using Radzen;
 using ScrumPoker.Components;
 using ScrumPoker.Data.Dto;
+using ScrumPoker.Data.Dto.Backlogs;
 using ScrumPoker.Data.Services;
 
 namespace ScrumPoker.Web.Components.Pages;
@@ -120,9 +122,9 @@ public partial class PokerSession(
         
     }
 
-    private void RevealResults()
+    private async Task RevealResults(CancellationToken cancellationToken)
     {
-
+        await sessionService.RevealResultsAsync(ActiveSession.Id, cancellationToken);
     }
 
     private async Task SetAdminUser()
@@ -213,6 +215,17 @@ public partial class PokerSession(
             }
             InvokeAsync(() =>
             {
+                StateHasChanged();
+            });
+        });
+
+        _hubConnection.On<BacklogEstimateSummaryDto>("EstimationRevealed", (result) =>
+        {
+            InvokeAsync(() =>
+            {
+                ActiveSession.ActiveBacklog.IsRevealed = true;
+                ActiveSession.ActiveBacklog.Estimates.ForEach(e => e.Value = result.Estimates.FirstOrDefault(x => x.ParticipantId == e.ParticipantId)?.Value);
+                ActiveSession.ActiveBacklog.Estimates.Sort((x, y) => x.Value?.CompareTo(y.Value) ?? 0);
                 StateHasChanged();
             });
         });

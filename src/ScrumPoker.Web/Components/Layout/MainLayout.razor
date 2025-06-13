@@ -15,7 +15,6 @@
     </RadzenHeader>
     <ErrorBoundary>
         <ChildContent>
-
             <RadzenBody>
                 <div class="rz-display-flex rz-row rz-align-items-normal rz-justify-content-center rz-mx-auto">
                     <div class="rz-col-7">
@@ -25,8 +24,6 @@
             </RadzenBody>
         </ChildContent>
         <ErrorContent>
-            <p>An error occurred:</p>
-            <p>@context.Message</p>
             @{
                 NotificationService.Notify(new NotificationMessage
                 {

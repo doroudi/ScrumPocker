@@ -14,7 +14,6 @@ public partial class EntranceDialog(DialogService dialogService, NavigationManag
     EntranceModel model = new();
     public void Enter()
     {
-        //TODO: do validation and show error
         if (!string.IsNullOrEmpty(model.DisplayName))
         {
             dialogService.Close(model.DisplayName);

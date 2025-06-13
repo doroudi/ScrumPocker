@@ -9,7 +9,8 @@
 <SectionContent SectionName="header">
     <div class="rz-display-flex rz-justify-content-between rz-align-items-center">
         <div style="font-weight:bold;margin-right:1rem;font-size:1rem">
-            <span>SessionID: <a href="@navigation.Uri">@ActiveSession?.Id</a></span>
+            @* <span>Session: <a href="@navigation.Uri">@ActiveSession?.Id</a></span> *@
+            <span>Session: <a href="@navigation.Uri">@ActiveSession?.Title</a></span>
         </div>
         <RadzenButton Variant="Variant.Outlined" class="rz-ripple"
             Icon="share" Size="ButtonSize.Medium" ButtonStyle="ButtonStyle.Base"
@@ -24,8 +25,14 @@
     }
     @if (!IsAdmin)
     {
-        <h2>User: @ActiveUser?.DisplayName</h2>
-        <EstimateCards OnEstimate=@DoEstimate />
+        //TODO: show Task details
+        
+        <div class="rz-text-align-center">
+            <h2>@ActiveUser.DisplayName</h2>
+        </div>
+        <h2>Your vote:</h2>
+        @* <h2>User: @ActiveUser?.DisplayName</h2> *@
+        <PokerCards OnEstimate=@DoEstimate />
     }
     <RadzenStack AlignItems="AlignItems.Center" Orientation="Orientation.Horizontal"
         JustifyContent="JustifyContent.SpaceBetween">
@@ -34,12 +41,12 @@
         {
 
             @if (ActiveSession.ActiveBacklog.Estimates.Any()){
-                <RadzenButton Variant="Variant.Flat" class="action-button rz-ripple rz-margin-right-4"
+                @* <RadzenButton Variant="Variant.Flat" class="action-button rz-ripple rz-margin-right-4"
                     ButtonType="ButtonType.Button" Icon="delete" Text="Delete Estimates" Size="ButtonSize.Medium"
-                    ButtonStyle="ButtonStyle.Secondary" Click=@DeleteEstimates />
+                    ButtonStyle="ButtonStyle.Secondary" Click=@DeleteEstimates /> *@
 
                 <RadzenButton Variant="Variant.Flat" class="action-button rz-ripple rz-margin-right-4"
-                    ButtonType="ButtonType.Button" Icon="visibility" Text="Delete Estimates" Size="ButtonSize.Medium"
+                    ButtonType="ButtonType.Button" Icon="visibility" Text="Reveal" Size="ButtonSize.Medium"
                     ButtonStyle="ButtonStyle.Success" Click=@RevealResults />
             }
         }
@@ -52,7 +59,7 @@
                 var isUserEstimated = ActiveSession.ActiveBacklog.Estimates
                     .Any(e => e.ParticipantId == item.Id);
                     
-                <Estimate Username="@item.DisplayName" Revealed=@ActiveSession.ActiveBacklog.IsRevealed estimated="isUserEstimated"  />
+                <EstimationItem Username="@item.DisplayName" Revealed=@ActiveSession.ActiveBacklog.IsRevealed IsUserEstimated=@isUserEstimated  />
             }
         </div>
     }
