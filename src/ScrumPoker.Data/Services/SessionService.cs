@@ -170,7 +170,7 @@ public class SessionService : ISessionService
             update,
             new UpdateOptions { IsUpsert = true });
 
-        await SendSocketEventToClientsAsync("TaskEstimated", sessionId, new
+        await SendSocketEventToClientsAsync("TaskEstimated", sessionId, new EstimateDto
         {
             BacklogId = backlogId,
             ParticipantId = participantId,

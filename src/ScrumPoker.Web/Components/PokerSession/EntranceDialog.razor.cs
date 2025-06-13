@@ -5,14 +5,19 @@ namespace ScrumPoker.Components;
 
 public partial class EntranceDialog(DialogService dialogService, NavigationManager navigationManager)
 {
-    public string? DisplayName { get; set; }
 
+    class EntranceModel
+    {
+        public string? DisplayName { get; set; }
+    }
+
+    EntranceModel model = new();
     public void Enter()
     {
         //TODO: do validation and show error
-        if (!string.IsNullOrEmpty(DisplayName))
+        if (!string.IsNullOrEmpty(model.DisplayName))
         {
-            dialogService.Close(DisplayName);
+            dialogService.Close(model.DisplayName);
         }
     }
 

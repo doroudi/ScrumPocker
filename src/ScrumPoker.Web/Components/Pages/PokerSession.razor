@@ -49,7 +49,10 @@
         <div class="estimates">
             @foreach (var item in ActiveSession.Participants)
             {
-                <Estimate Username="@item.DisplayName" Revealed=@ActiveSession.ActiveBacklog.IsRevealed />
+                var isUserEstimated = ActiveSession.ActiveBacklog.Estimates
+                    .Any(e => e.ParticipantId == item.Id);
+                    
+                <Estimate Username="@item.DisplayName" Revealed=@ActiveSession.ActiveBacklog.IsRevealed estimated="isUserEstimated"  />
             }
         </div>
     }

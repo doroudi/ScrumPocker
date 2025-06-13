@@ -6,7 +6,7 @@
             <span class="revealed">@Value</span>
         }
         else {
-            if(Value.HasValue) {
+            if(isUserEstimated) {
                 <span class="selected">?</span>
             }
             else {
@@ -26,6 +26,8 @@
 
     [Parameter]
     public bool Revealed {get;set;} = false;
+    [Parameter]
+    public bool isUserEstimated { get; set; } = false;
 }
 
 

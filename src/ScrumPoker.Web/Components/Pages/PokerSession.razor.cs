@@ -187,6 +187,14 @@ public partial class PokerSession(
                 if (participant != null)
                 {
                     ActiveSession?.Participants.Remove(participant);
+
+                    notificationService.Notify(new NotificationMessage
+                    {
+                        Severity = NotificationSeverity.Warning,
+                        Summary = "Participant Left",
+                        Detail = $"{participant.DisplayName} has disconnected.",
+                        Duration = 3000
+                    });
                     StateHasChanged();
                 }
             });
