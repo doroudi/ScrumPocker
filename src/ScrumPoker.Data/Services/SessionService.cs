@@ -1,7 +1,6 @@
 using ErrorOr;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.SignalR;
-using Microsoft.Extensions.Options;
 using MongoDB.Bson;
 using MongoDB.Driver;
 using ScrumPoker.Data.Dto;
@@ -24,16 +23,15 @@ public class SessionService : ISessionService
 
     #region Ctor
     public SessionService(
-        IOptions<ScrumPokerDatabaseSettings> dbSettings,
+        IMongoClient mongoClient,
         IHttpContextAccessor httpContextAccessor,
-        IHubContext<SessionHub> hubContext)
+        IHubContext<SessionHub> hubContext,
+        IMongoClient client)
     {
         _httpContextAccessor = httpContextAccessor;
         _hubContext = hubContext;
 
-        var client = new MongoClient(dbSettings.Value.ConnectionString);
-        var mongoDb = client.GetDatabase(dbSettings.Value.DatabaseName);
-
+        var mongoDb = client.GetDatabase("ScrumPoker");
         _sessions = mongoDb.GetCollection<Session>("sessions");
         _participants = mongoDb.GetCollection<Participant>("participants");
         _backlogs = mongoDb.GetCollection<Backlog>("backlogs");
@@ -41,7 +39,6 @@ public class SessionService : ISessionService
     }
 
     #endregion
-
 
     #region CreateSession
     public async Task<ErrorOr<SessionDto>> CreateSessionAsync(string sessionName)

@@ -3,11 +3,12 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using MongoDB.Bson.Serialization.Conventions;
 using Radzen;
 using ScrumPoker.Data.Hubs;
-using ScrumPoker.Data.Models;
 using ScrumPoker.Data.Services;
 using ScrumPoker.Web.Components;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.AddServiceDefaults();
 
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
@@ -18,7 +19,9 @@ builder.Services.AddRadzenComponents();
 var pack = new ConventionPack { new CamelCaseElementNameConvention() };
 ConventionRegistry.Register("CamelCaseConvention", pack, t => true);
 
-builder.Services.Configure<ScrumPokerDatabaseSettings>(builder.Configuration.GetSection("ScrumPokerDatabase"));
+//builder.Services.Configure<ScrumPokerDatabaseSettings>(builder.Configuration.GetSection("ScrumPokerDatabase"));
+builder.AddMongoDBClient("ScrumPoker");
+
 builder.Services.AddSingleton<ISessionService, SessionService>();
 builder.Services.AddSingleton<SessionHub>();
 builder.Services.AddSignalR();
@@ -28,6 +31,8 @@ builder.Services.AddResponseCompression(opt =>
 });
 
 var app = builder.Build();
+
+app.MapDefaultEndpoints();
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
