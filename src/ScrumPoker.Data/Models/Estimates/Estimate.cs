@@ -1,10 +1,14 @@
 using MongoDB.Bson;
+using MongoDB.Bson.Serialization.Attributes;
 using ScrumPoker.Data.Dto;
 
 namespace ScrumPoker.Data.Models;
 
 public class Estimate
 {
+    [BsonId]
+    [BsonRepresentation(BsonType.ObjectId)]
+    public ObjectId Id { get; set; }
     public ObjectId ParticipantId { get; init; }
 
     public ObjectId BacklogId { get; init; }

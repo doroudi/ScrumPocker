@@ -207,7 +207,7 @@ public class SessionService : ISessionService
         if (session is null)
             return Errors.Session.SessionNotFound;
 
-        var estimates = _estimates.Find(x => x.BacklogId == session.ActiveTaskId).ToList();
+        var estimates = await _estimates.Find(x => x.BacklogId == session.ActiveTaskId).ToListAsync();
         //TODO: make active backlog revealed
         var backlog = _backlogs.Find(x => x.Id == session.ActiveTaskId).FirstOrDefault();
 
@@ -216,7 +216,7 @@ public class SessionService : ISessionService
 
         var resultSummary = new BacklogEstimateSummaryDto
         {
-            Estimates = estimates.Select(e => e.ToDto()).ToList(),
+            Estimates = estimates.ToList().Select(e => e.ToDto()).ToList(),
             BacklogId = session.ActiveTaskId.ToString(),
             Average = estimates.Average(e => e.Value),
             Mood = estimates.GroupBy(e => e.Value)

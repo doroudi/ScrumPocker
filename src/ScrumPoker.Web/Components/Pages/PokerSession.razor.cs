@@ -1,5 +1,4 @@
-﻿using System.Threading.Tasks;
-using Microsoft.AspNetCore.Components;
+﻿using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.JSInterop;
 using Radzen;
@@ -26,9 +25,11 @@ public partial class PokerSession(
     private bool IsAdmin => ActiveUser?.Id == ActiveSession?.CreatorId;
     private bool _initializationRequired;
     private ParticipantDto? ActiveUser;
+    private string? UserId =>
+       httpContextAccessor.HttpContext?.Request.Cookies.FirstOrDefault(c => c.Key == "UserId").Value;
 
     #endregion!
-    
+
     #region Parameters
     [Parameter]
     public required string Id { get; set; }
@@ -64,8 +65,18 @@ public partial class PokerSession(
             }
         }
     }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_hubConnection != null)
+        {
+            await _hubConnection.InvokeAsync("UserLeft");
+            await _hubConnection.DisposeAsync();
+        }
+    }
     #endregion
 
+    #region SessionManagement
     public async Task<SessionDto> LoadSession(CancellationToken cancellationToken)
     {
         if (ActiveSession != null)
@@ -106,6 +117,19 @@ public partial class PokerSession(
         await InvokeAsync(StateHasChanged);
     }
 
+    private async Task SetAdminUser()
+    {
+        ActiveUser = new ParticipantDto
+        {
+            Id = ActiveSession.CreatorId,
+            DisplayName = "Admin"
+        };
+
+        await JoinToSessionSocket(ActiveUser, default);
+    }
+    #endregion
+
+    #region Estimation
     private async Task DoEstimate(string value)
     {
         if (ActiveSession == null || ActiveUser == null)
@@ -122,22 +146,13 @@ public partial class PokerSession(
         
     }
 
-    private async Task RevealResults(CancellationToken cancellationToken)
+    private async Task RevealResults()
     {
-        await sessionService.RevealResultsAsync(ActiveSession.Id, cancellationToken);
+        await sessionService.RevealResultsAsync(ActiveSession.Id, default);
     }
+    #endregion
 
-    private async Task SetAdminUser()
-    {
-        ActiveUser = new ParticipantDto
-        {
-            Id = ActiveSession.CreatorId,
-            DisplayName = "Admin"
-        };
-
-        await JoinToSessionSocket(ActiveUser, default);
-    }
-
+    #region WebSocket
     private async Task JoinToSessionSocket(ParticipantDto participant, CancellationToken cancellationToken)
     {
         if (_hubConnection != null && _hubConnection.State == HubConnectionState.Connected)
@@ -223,16 +238,17 @@ public partial class PokerSession(
         {
             InvokeAsync(() =>
             {
-                ActiveSession.ActiveBacklog.IsRevealed = true;
                 ActiveSession.ActiveBacklog.Estimates.ForEach(e => e.Value = result.Estimates.FirstOrDefault(x => x.ParticipantId == e.ParticipantId)?.Value);
                 ActiveSession.ActiveBacklog.Estimates.Sort((x, y) => x.Value?.CompareTo(y.Value) ?? 0);
+                ActiveSession.ActiveBacklog.IsRevealed = true;
                 StateHasChanged();
             });
         });
         await _hubConnection.StartAsync();
     }
+    #endregion
 
-
+    #region Utilities
     public async Task Share()
     {
         var url = navigation.Uri.ToString();
@@ -255,15 +271,5 @@ public partial class PokerSession(
         });
     }
 
-    public async ValueTask DisposeAsync()
-    {
-        if (_hubConnection != null)
-        {
-            await _hubConnection.InvokeAsync("UserLeft");
-            await _hubConnection.DisposeAsync();
-        }
-    }
-
-    private string? UserId =>
-        httpContextAccessor.HttpContext?.Request.Cookies.FirstOrDefault(c => c.Key == "UserId").Value;
+    #endregion
 }

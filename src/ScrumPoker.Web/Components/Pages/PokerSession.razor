@@ -25,8 +25,6 @@
     }
     @if (!IsAdmin)
     {
-        //TODO: show Task details
-        
         <div class="rz-text-align-center">
             <h2>@ActiveUser.DisplayName</h2>
         </div>
@@ -56,10 +54,8 @@
         <div class="estimates">
             @foreach (var item in ActiveSession.Participants)
             {
-                var isUserEstimated = ActiveSession.ActiveBacklog.Estimates
-                    .Any(e => e.ParticipantId == item.Id);
-                    
-                <EstimationItem Username="@item.DisplayName" Revealed=@ActiveSession.ActiveBacklog.IsRevealed IsUserEstimated=@isUserEstimated  />
+                var estimate = ActiveSession.ActiveBacklog.Estimates.FirstOrDefault(x => x.ParticipantId == item.Id);
+                <EstimationItem Username="@item.DisplayName" Revealed=@ActiveSession.ActiveBacklog.IsRevealed IsUserEstimated=@(estimate != null) Value=@estimate?.Value  />
             }
         </div>
     }
